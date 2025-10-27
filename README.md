@@ -19,6 +19,8 @@ medRxiv
 
 [results.R](results.R)
 
+[results.Rmd](results.Rmd)
+
 [tables.R](tables.R)
 
 [figures.R](figures.R)
