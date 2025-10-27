@@ -1,0 +1,1360 @@
+---
+title: "Restriction with Normal Spirometry: Results"
+output: html_document
+date: "`r Sys.Date()`"
+output_dir: "../results"
+---
+
+## Abstract
+
+```{r}
+
+pfts %>% 
+  nrow () %>% 
+  comma ()
+
+```
+
+Number of patients
+
+```{r}
+
+pfts %>%
+  select (mrn) %>%
+  distinct () %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Number of tests with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Restrictive with Normal Spirometry") %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Percentage of tests with normal spirometry and restriction
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Restrictive with Normal Spirometry") %>%
+  nrow () %>%
+  divide_by (nrow (filter (pfts, fev1_fvc_z_score >= -1.645 & fvc_z_score >= -1.645))) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Confidence intervals for percentage of tests with normal spirometry and restriction 
+
+```{r}
+
+print_ci (
+  
+  exactci (
+    pfts %>%
+      filter (interpretation == "Restrictive with Normal Spirometry") %>%
+      nrow (),
+    pfts %>%
+      filter (fev1_fvc_z_score >= -1.645 & fvc_z_score >= -1.645) %>% 
+      nrow (),
+    0.95
+  )
+  
+)
+
+```
+
+Adjusted odds ratio of restriction in non-White patients
+
+```{r}
+
+data <- pfts %>%
+  filter (fvc_z_score >= -1.645 & fev1_fvc_z_score >= -1.645) %>% 
+  mutate (non_white = case_when (
+    race == 1 ~ 0,
+    race == 2 | race == 3 | race == 4 ~ 1)
+  ) %>% 
+  mutate (non_white = as.factor (non_white))
+
+tidy (glm (
+  formula = restriction ~ non_white + age + sex + fev1_z_score + fvc_z_score +
+    fev1_fvc_z_score,
+  family = "binomial",
+  data = data), conf.int = TRUE, exponentiate = TRUE
+)
+
+```
+
+## Results
+
+Number of PFTs
+
+```{r}
+
+pfts %>% 
+  nrow () %>% 
+  comma ()
+
+```
+
+Number of patients
+
+```{r}
+
+pfts %>%
+  select (mrn) %>%
+  distinct () %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Number of PFTs from female patients
+
+```{r}
+
+pfts %>%
+  filter (sex == 2) %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Percentage of PFTs from female patients
+
+```{r}
+
+pfts %>%
+  filter (sex == 2) %>%
+  nrow () %>%
+  divide_by (nrow (pfts)) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Number of PFTs from white patients
+
+```{r}
+
+pfts %>%
+  filter (race == 1) %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Percentage of PFTs from white patients
+
+```{r}
+
+pfts %>%
+  filter (race == 1) %>%
+  nrow () %>%
+  divide_by (nrow (filter (pfts, is.na (race) == 0))) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Number of PFTs from Black patients
+
+```{r}
+
+pfts %>%
+  filter (race == 2) %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Percentage of PFTs from Black patients
+
+```{r}
+
+pfts %>%
+  filter (race == 2) %>%
+  nrow () %>%
+  divide_by (nrow (filter (pfts, is.na (race) == 0))) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+
+```
+
+Mean patient age
+
+```{r}
+
+pfts %>%
+  pull (age) %>%
+  mean () %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Standard deviation patient age
+
+```{r}
+
+pfts %>%
+  pull (age) %>%
+  sd () %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Mean FVC z-score
+
+```{r}
+
+pfts %>%
+  pull (fvc_z_score) %>%
+  mean () %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Standard deviation FVC z-score
+
+```{r}
+
+pfts %>%
+  pull (fvc_z_score) %>%
+  sd () %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Mean FEV1/FVC z-score
+
+```{r}
+
+pfts %>%
+  pull (fev1_fvc_z_score) %>%
+  mean () %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Standard deviation FEV1/FVC z-score
+
+```{r}
+
+pfts %>%
+  pull (fev1_fvc_z_score) %>%
+  sd () %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Mean TLC z-score
+
+```{r}
+
+pfts %>%
+  pull (tlc_z_score) %>%
+  mean () %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Standard deviation TLC z-score
+
+```{r}
+
+pfts %>%
+  pull (tlc_z_score) %>%
+  sd () %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Median follow up time
+
+```{r}
+
+pfts %>%
+  mutate (follow_up = interval (date, date_last) %/% months (1)) %>%
+  pull (follow_up) %>%
+  median (na.rm = TRUE) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+IQR follow up time
+
+```{r}
+
+pfts %>%
+  mutate (follow_up = interval (date, date_last) %/% months (1)) %>%
+  pull (follow_up) %>%
+  IQR (na.rm = TRUE) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Number of tests with restriction
+
+```{r}
+
+pfts %>%
+  filter (tlc_z_score < -1.645) %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Percentage of tests with restriction
+
+```{r}
+
+pfts %>%
+  filter (tlc_z_score < -1.645) %>%
+  nrow () %>%
+  divide_by (nrow (pfts)) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Confidence intervals for percentage of tests with restriction 
+
+```{r}
+
+print_ci (
+  
+  exactci (
+    pfts %>%
+      filter (tlc_z_score < -1.645) %>%
+      nrow (),
+    pfts %>%
+      nrow (),
+    0.95
+  )
+  
+)
+
+```
+
+Number of tests with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Restrictive with Normal Spirometry") %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Percentage of tests with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Restrictive with Normal Spirometry") %>%
+  nrow () %>%
+  divide_by (nrow (pfts)) %>% 
+  multiply_by (100) %>% 
+  round (digits = 1) %>% 
+  format (nsmall = 1)
+
+```
+
+Confidence interval for percentage of tests with restriction with normal spirometry
+
+```{r}
+
+print_ci (
+  
+  exactci (
+    pfts %>%
+      filter (interpretation == "Restrictive with Normal Spirometry") %>%
+      nrow (),
+    pfts %>%
+      nrow (),
+    0.95
+  )
+  
+)
+
+```
+
+Number of tests with restriction with abnormal spirometry
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Restrictive with Abnormal Spirometry") %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Percentage of tests with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Restrictive with Abnormal Spirometry") %>%
+  nrow () %>%
+  divide_by (nrow (pfts)) %>% 
+  multiply_by (100) %>% 
+  round (digits = 1) %>% 
+  format (nsmall = 1)
+
+```
+
+Confidence interval for percentage of tests with restriction with normal spirometry
+
+```{r}
+
+print_ci (
+  
+  exactci (
+    pfts %>%
+      filter (interpretation == "Restrictive with Abnormal Spirometry") %>%
+      nrow (),
+    pfts %>%
+      nrow (),
+    0.95
+  )
+  
+)
+
+```
+
+Number of tests with a mixed impairment
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Mixed") %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Percentage of tests with a mixed impairment
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Mixed") %>%
+  nrow () %>%
+  divide_by (nrow (pfts)) %>% 
+  multiply_by (100) %>% 
+  round (digits = 1) %>% 
+  format (nsmall = 1)
+
+```
+
+Confidence interval for percentage of tests with a mixed impairment
+
+```{r}
+
+print_ci (
+  
+  exactci (
+    pfts %>%
+      filter (interpretation == "Mixed") %>%
+      nrow (),
+    pfts %>%
+      nrow (),
+    0.95
+  )
+  
+)
+
+```
+
+Percentage of tests with normal spirometry and restriction
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Restrictive with Normal Spirometry") %>%
+  nrow () %>%
+  divide_by (nrow (filter (pfts, fev1_fvc_z_score >= -1.645 & fvc_z_score >= -1.645))) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Confidence intervals for percentage of tests with normal spirometry and restriction 
+
+```{r}
+
+print_ci (
+  
+  exactci (
+    pfts %>%
+      filter (interpretation == "Restrictive with Normal Spirometry") %>%
+      nrow (),
+    pfts %>%
+      filter (fev1_fvc_z_score >= -1.645 & fvc_z_score >= -1.645) %>% 
+      nrow (),
+    0.95
+  )
+  
+)
+
+```
+
+Percentage of tests with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Restrictive with Normal Spirometry") %>%
+  nrow () %>%
+  divide_by (nrow (pfts)) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Confidence intervals for percentage of tests with restriction with normal spirometry
+
+```{r}
+
+print_ci (
+
+  exactci (
+    pfts %>%
+      filter (interpretation == "Restrictive with Normal Spirometry") %>%
+      nrow (),
+    pfts %>%
+      nrow (),
+    0.95
+  )
+  
+)
+
+```
+
+Number of tests with restriction with abnormal spirometry
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Restrictive with Abnormal Spirometry") %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Percentage of tests with restriction with abnormal spirometry
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Restrictive with Abnormal Spirometry") %>%
+  nrow () %>%
+  divide_by (nrow (pfts)) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Confidence intervals for percentage of tests with restriction with abnormal spirometry
+
+```{r}
+
+print_ci (
+
+  exactci (
+    pfts %>%
+      filter (interpretation == "Restrictive with Abnormal Spirometry") %>%
+      nrow (),
+    pfts %>%
+      nrow (),
+    0.95
+  )
+  
+)
+
+```
+
+Number of tests with mixed defect
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Mixed") %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Percentage of tests with mixed defect
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Mixed") %>%
+  nrow () %>%
+  divide_by (nrow (pfts)) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Confidence intervals for percentage of tests with mixed defect
+
+```{r}
+
+print_ci (
+
+  exactci (
+    pfts %>%
+      filter (interpretation == "Mixed") %>%
+      nrow (),
+    pfts %>%
+      nrow (),
+    0.95
+  )
+  
+)
+
+```
+
+Percentage of tests with normal spirometry and restriction at pulmonary diagnostic lab 2
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Restrictive with Normal Spirometry" & location == 2) %>%
+  nrow () %>%
+  divide_by (nrow (filter (pfts, fev1_fvc_z_score >= -1.645 & fvc_z_score >= -1.645 & location == 2))) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+
+Confidence interval for percentage of tests with normal spirometry and restriction at pulmonary diagnostic lab 2
+
+```{r}
+
+print_ci (
+
+  exactci (
+    pfts %>%
+      filter (
+        fvc_z_score >= -1.645 &
+        fev1_fvc_z_score >= -1.645 &
+        tlc_z_score < -1.645 &
+        location == 2
+      ) %>%
+      nrow (),
+    pfts %>%
+      filter (
+        fvc_z_score >= -1.645 &
+        fev1_fvc_z_score >= -1.645 &
+        location == 2
+      ) %>%
+      nrow (),
+    0.95
+  )
+  
+)
+
+```
+
+Percentage of tests with normal spirometry and restriction at pulmonary diagnostic lab 3
+
+```{r}
+
+pfts %>%
+  filter (interpretation == "Restrictive with Normal Spirometry" & location == 3) %>%
+  nrow () %>%
+  divide_by (nrow (filter (pfts, fev1_fvc_z_score >= -1.645 & fvc_z_score >= -1.645 & location == 3))) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+
+Confidence interval for percentage of tests with normal spirometry and restriction at pulmonary diagnostic lab 2
+
+```{r}
+
+print_ci (
+
+  exactci (
+    pfts %>%
+      filter (
+        fvc_z_score >= -1.645 &
+        fev1_fvc_z_score >= -1.645 &
+        tlc_z_score < -1.645 &
+        location == 3
+      ) %>%
+      nrow (),
+    pfts %>%
+      filter (
+        fvc_z_score >= -1.645 &
+        fev1_fvc_z_score >= -1.645 &
+        location == 3
+      ) %>%
+      nrow (),
+    0.95
+  )
+  
+)
+
+```
+
+Median TLC z-score in tests with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (
+    fvc_z_score >= -1.645 &
+    fev1_fvc_z_score >= -1.645 &
+    tlc_z_score < -1.645
+  ) %>%
+  pull (tlc_z_score) %>%
+  median () %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Q1 for TLC z-score in tests with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (
+    fvc_z_score >= -1.645 &
+    fev1_fvc_z_score >= -1.645 &
+    tlc_z_score < -1.645
+  ) %>%
+  pull (tlc_z_score) %>%
+  quantile (0.25) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Q3 for TLC z-score in tests with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (
+    fvc_z_score >= -1.645 &
+    fev1_fvc_z_score >= -1.645 &
+    tlc_z_score < -1.645
+  ) %>%
+  pull (tlc_z_score) %>%
+  quantile (0.75) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Number of patients with restriction with normal spirometry on their first test
+
+```{r}
+
+patients <- pfts %>%
+  arrange (date) %>%
+  group_by (mrn) %>%
+  filter (row_number () == 1) %>%
+  filter (
+    fvc_z_score >= -1.645 &
+    fev1_fvc_z_score >= -1.645 &
+    tlc_z_score < -1.645
+  ) %>%
+  pull (mrn)
+
+patients %>% 
+  length () %>% 
+  comma ()
+
+```
+
+Number of second tests with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (mrn %in% patients) %>%
+  arrange (date) %>%
+  group_by (mrn) %>%
+  filter (row_number () == 2) %>%
+  filter (interpretation == "Restrictive with Normal Spirometry") %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Percentage of second test with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (mrn %in% patients) %>%
+  arrange (date) %>%
+  group_by (mrn) %>%
+  filter (row_number () == 2) %>%
+  filter (interpretation == "Restrictive with Normal Spirometry") %>%
+  nrow () %>%
+  divide_by (
+    pfts %>%
+      filter (mrn %in% patients) %>%
+      arrange (date) %>%
+      group_by (mrn) %>%
+      filter (row_number () == 2) %>%
+      nrow ()
+  ) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Confidence interval for percentage of second tests with restriction with normal spirometry
+
+```{r}
+
+print_ci (
+  
+  exactci (
+    pfts %>%
+      filter (mrn %in% patients) %>%
+      arrange (date) %>%
+      group_by (mrn) %>%
+      filter (row_number () == 2) %>%
+      filter (interpretation == "Restrictive with Normal Spirometry") %>%
+      nrow (),
+    pfts %>%
+      filter (mrn %in% patients) %>%
+      arrange (date) %>%
+      group_by (mrn) %>%
+      filter (row_number () == 2) %>%
+      nrow (),
+    0.95
+  )
+  
+)
+
+```
+
+Number of third tests with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (mrn %in% patients) %>%
+  arrange (date) %>%
+  group_by (mrn) %>%
+  filter (row_number () == 3) %>%
+  filter (interpretation == "Restrictive with Normal Spirometry") %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Percentage of third tests with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (mrn %in% patients) %>%
+  arrange (date) %>%
+  group_by (mrn) %>%
+  filter (row_number () == 3) %>%
+  filter (interpretation == "Restrictive with Normal Spirometry") %>%
+  nrow () %>%
+  divide_by (
+    pfts %>%
+      filter (mrn %in% patients) %>%
+      arrange (date) %>%
+      group_by (mrn) %>%
+      filter (row_number () == 3) %>%
+      nrow ()
+  ) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Confidence interval for percentage of third tests with restriction with normal spirometry
+
+```{r}
+
+print_ci (
+  
+  exactci (
+    pfts %>%
+      filter (mrn %in% patients) %>%
+      arrange (date) %>%
+      group_by (mrn) %>%
+      filter (row_number () == 3) %>%
+      filter (interpretation == "Restrictive with Normal Spirometry") %>%
+      nrow (),
+    pfts %>%
+      filter (mrn %in% patients) %>%
+      arrange (date) %>%
+      group_by (mrn) %>%
+      filter (row_number () == 3) %>%
+      nrow (),
+    0.95
+  )
+  
+)
+
+```
+
+Number of fourth tests with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (mrn %in% patients) %>%
+  arrange (date) %>%
+  group_by (mrn) %>%
+  filter (row_number () == 4) %>%
+  filter (interpretation == "Restrictive with Normal Spirometry") %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Percentage of fourth tests with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (mrn %in% patients) %>%
+  arrange (date) %>%
+  group_by (mrn) %>%
+  filter (row_number () == 4) %>%
+  filter (interpretation == "Restrictive with Normal Spirometry") %>%
+  nrow () %>%
+  divide_by (
+    pfts %>%
+      filter (mrn %in% patients) %>%
+      arrange (date) %>%
+      group_by (mrn) %>%
+      filter (row_number () == 4) %>%
+      nrow ()
+  ) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Confidence interval for percentage of fourth tests with restriction with normal spirometry
+
+```{r}
+
+print_ci (
+  
+  exactci (
+    pfts %>%
+      filter (mrn %in% patients) %>%
+      arrange (date) %>%
+      group_by (mrn) %>%
+      filter (row_number () == 4) %>%
+      filter (interpretation == "Restrictive with Normal Spirometry") %>%
+      nrow (),
+    pfts %>%
+      filter (mrn %in% patients) %>%
+      arrange (date) %>%
+      group_by (mrn) %>%
+      filter (row_number () == 4) %>%
+      nrow (),
+    0.95
+  )
+  
+)
+
+```
+
+Number of fifth tests with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (mrn %in% patients) %>%
+  arrange (date) %>%
+  group_by (mrn) %>%
+  filter (row_number () == 5) %>%
+  filter (interpretation == "Restrictive with Normal Spirometry") %>%
+  nrow () %>%
+  comma ()
+
+```
+
+Percentage of fifth tests with restriction with normal spirometry
+
+```{r}
+
+pfts %>%
+  filter (mrn %in% patients) %>%
+  arrange (date) %>%
+  group_by (mrn) %>%
+  filter (row_number () == 5) %>%
+  filter (interpretation == "Restrictive with Normal Spirometry") %>%
+  nrow () %>%
+  divide_by (
+    pfts %>%
+      filter (mrn %in% patients) %>%
+      arrange (date) %>%
+      group_by (mrn) %>%
+      filter (row_number () == 5) %>%
+      nrow ()
+  ) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Confidence interval for percentage of fifth tests with restriction with normal spirometry
+
+```{r}
+
+print_ci (
+  
+  exactci (
+    pfts %>%
+      filter (mrn %in% patients) %>%
+      arrange (date) %>%
+      group_by (mrn) %>%
+      filter (row_number () == 5) %>%
+      filter (interpretation == "Restrictive with Normal Spirometry") %>%
+      nrow (),
+    pfts %>%
+      filter (mrn %in% patients) %>%
+      arrange (date) %>%
+      group_by (mrn) %>%
+      filter (row_number () == 5) %>%
+      nrow (),
+    0.95
+  )
+  
+)
+
+```
+
+Number of repeat tests with restriction with normal spirometry
+
+```{r}
+
+data_1 <- pfts %>%
+  group_by (mrn) %>%
+  select (
+    test_1 = test,
+    date_1 = date,
+    mrn,
+    age,
+    sex,
+    race,
+    fev1_z_score,
+    fvc_z_score,
+    fev1_fvc_z_score,
+    interpretation_1 = interpretation
+  ) %>%
+  mutate (rank = row_number ()) %>%
+  mutate (total = n ()) %>%
+  mutate (test_2 = case_when (
+    rank < total ~ test_1 + 1)
+  )
+
+data_2 <- pfts %>%
+  select (
+    test_2 = test,
+    date_2 = date,
+    interpretation_2 = interpretation
+  )
+
+data <- data_1 %>%
+  left_join (data_2, by = "test_2") %>%
+  mutate (time = difftime (date_2, date_1, units = "days")) %>%
+  mutate (time = as.double (time)) %>%
+  select (-rank) %>%
+  select (-total) %>%
+  filter (is.na (interpretation_2) == 0) %>%
+  mutate (interpretation_2 = as.factor (interpretation_2))
+
+
+data %>% 
+  filter (
+    interpretation_1 == "Restrictive with Normal Spirometry" &
+    interpretation_2 == "Restrictive with Normal Spirometry"  
+  ) %>% 
+  nrow () %>% 
+  comma ()
+
+```
+
+Percentage of repeat tests with restriction with normal spirometry
+
+```{r}
+
+data %>% 
+  filter (
+    interpretation_1 == "Restrictive with Normal Spirometry" &
+    interpretation_2 == "Restrictive with Normal Spirometry"  
+  ) %>% 
+  nrow () %>% 
+  divide_by (
+    data %>% 
+      filter (
+        interpretation_1 == "Restrictive with Normal Spirometry"
+      ) %>% 
+      nrow ()
+  ) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Confidence interval for percentage of repeat tests with restriction with normal spirometry
+
+```{r}
+
+print_ci (
+  
+  exactci (
+    data %>% 
+      filter (
+        interpretation_1 == "Restrictive with Normal Spirometry" &
+        interpretation_2 == "Restrictive with Normal Spirometry"
+      ) %>% 
+      nrow (),
+    data %>% 
+      filter (
+        interpretation_1 == "Restrictive with Normal Spirometry"
+      ) %>% 
+      nrow (),    
+    0.95
+  )
+  
+)
+
+```
+
+Number of repeat tests with normal spirometry
+
+```{r}
+
+data %>% 
+  filter (
+    interpretation_1 == "Restrictive with Normal Spirometry" &
+    interpretation_2 == "Normal"  
+  ) %>% 
+  nrow () %>% 
+  comma ()
+
+```
+
+Percentage of repeat tests with restriction with normal spirometry
+
+```{r}
+
+data %>% 
+  filter (
+    interpretation_1 == "Restrictive with Normal Spirometry" &
+    interpretation_2 == "Normal"  
+  ) %>% 
+  nrow () %>% 
+  divide_by (
+    data %>% 
+      filter (
+        interpretation_1 == "Restrictive with Normal Spirometry"
+      ) %>% 
+      nrow ()
+  ) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Confidence interval for percentage of repeat tests with restriction with normal spirometry
+
+```{r}
+
+print_ci (
+  
+  exactci (
+    data %>% 
+      filter (
+        interpretation_1 == "Restrictive with Normal Spirometry" &
+        interpretation_2 == "Normal"
+      ) %>% 
+      nrow (),
+    data %>% 
+      filter (
+        interpretation_1 == "Restrictive with Normal Spirometry"
+      ) %>% 
+      nrow (),    
+    0.95
+  )
+  
+)
+
+```
+
+Number of repeat tests with restriction with abnormal spirometry
+
+```{r}
+
+data %>% 
+  filter (
+    interpretation_1 == "Restrictive with Normal Spirometry" &
+    interpretation_2 == "Restrictive with Abnormal Spirometry"  
+  ) %>% 
+  nrow () %>% 
+  comma ()
+
+```
+
+Percentage of repeat tests with restriction with normal spirometry
+
+```{r}
+
+data %>% 
+  filter (
+    interpretation_1 == "Restrictive with Normal Spirometry" &
+    interpretation_2 == "Restrictive with Abnormal Spirometry"  
+  ) %>% 
+  nrow () %>% 
+  divide_by (
+    data %>% 
+      filter (
+        interpretation_1 == "Restrictive with Normal Spirometry"
+      ) %>% 
+      nrow ()
+  ) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Confidence interval for percentage of repeat tests with restriction with normal spirometry
+
+```{r}
+
+print_ci (
+  
+  exactci (
+    data %>% 
+      filter (
+        interpretation_1 == "Restrictive with Normal Spirometry" &
+        interpretation_2 == "Restrictive with Abnormal Spirometry"
+      ) %>% 
+      nrow (),
+    data %>% 
+      filter (
+        interpretation_1 == "Restrictive with Normal Spirometry"
+      ) %>% 
+      nrow (),    
+    0.95
+  )
+  
+)
+
+```
+
+Number of repeat tests with a mixed impairment
+
+```{r}
+
+data %>% 
+  filter (
+    interpretation_1 == "Restrictive with Normal Spirometry" &
+    interpretation_2 == "Mixed"  
+  ) %>% 
+  nrow () %>% 
+  comma ()
+
+```
+
+Percentage of repeat tests with restriction with normal spirometry
+
+```{r}
+
+data %>% 
+  filter (
+    interpretation_1 == "Restrictive with Normal Spirometry" &
+    interpretation_2 == "Mixed"  
+  ) %>% 
+  nrow () %>% 
+  divide_by (
+    data %>% 
+      filter (
+        interpretation_1 == "Restrictive with Normal Spirometry"
+      ) %>% 
+      nrow ()
+  ) %>%
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
+Confidence interval for percentage of repeat tests with restriction with normal spirometry
+
+```{r}
+
+print_ci (
+  
+  exactci (
+    data %>% 
+      filter (
+        interpretation_1 == "Restrictive with Normal Spirometry" &
+        interpretation_2 == "Mixed"
+      ) %>% 
+      nrow (),
+    data %>% 
+      filter (
+        interpretation_1 == "Restrictive with Normal Spirometry"
+      ) %>% 
+      nrow (),    
+    0.95
+  )
+  
+)
+
+```

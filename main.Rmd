@@ -1,0 +1,21 @@
+---
+title: "Restriction with Normal Spirometry"
+output: html_document
+date: "2025-02-19"
+---
+
+```{r}
+
+set.seed (1919)
+
+source ("dependencies.R")
+source ("definitions.R")
+source ("functions.R")
+source ("data.R")
+#source ("tables.R")
+#source ("figures.R")
+#source ("results.R")
+
+sessionInfo ()
+
+```
