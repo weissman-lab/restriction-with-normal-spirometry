@@ -3,7 +3,7 @@ Code used in "Restriction with Normal Spirometry: A Retrospective Cohort Study" 
 
 ## Manuscript
 
-medRxiv
+[medRxiv](https://doi.org/10.64898/2025.12.15.25342141)
 
 ## Code
 
