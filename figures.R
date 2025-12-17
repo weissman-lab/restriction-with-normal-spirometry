@@ -62,7 +62,37 @@ ggsave ("../figures/figure-1.png", dpi = 1200, width = 20, height = 10, units = 
 ## Figure 2
 ################################################################################
 
-# Figure 2a
+data <- pfts %>%
+  select (tlc_z_score, fvc_z_score) %>% 
+  mutate (interpretation = case_when (
+    fvc_z_score < -1.645 ~ "FVC Abnormal",
+    TRUE ~ "FVC Normal")
+  ) %>% 
+  mutate (interpretation = as.factor (interpretation))
+
+figure <- ggplot (data, aes (x = tlc_z_score, fill = interpretation)) +
+  geom_histogram (bins = 30, alpha = 0.7, position = "identity", color = "black") +
+  xlab ("TLC Z-Score") +
+  ylab ("Number of PFTs") +
+  xlim (-7.5, 5) +
+  geom_segment (aes(x = -1.645, xend = -1.645, y = 0, yend = 11000), linetype = "dashed") +
+  theme_classic (base_size = 10) +
+  scale_fill_manual (
+    name = "",  # Custom legend title
+    values = c("FVC Normal" = "#374E55FF", "FVC Abnormal" = "#DF8F44FF"),
+    labels = c("FVC Normal" = "FVC Normal", "FVC Abnormal" = "FVC Abnormal")
+  ) +
+  theme (text = element_text (family = "Arial")) +
+  annotate ("text", x = -2.75, y = 10500, label = "Z-score = -1.645", size = unit (3, "pt"), family = "Arial")  
+  
+
+ggsave ("../figures/figure-2.png", dpi = 1200, width = 20, height = 10, units = "cm")
+
+################################################################################
+## Figure 3
+################################################################################
+
+# Figure 3a
 
 mrns <- pfts %>%
   arrange (date) %>%
@@ -185,7 +215,7 @@ data <- data %>%
     "Mixed")
   )
 
-figure_3a <- ggplot (data,
+figure <- ggplot (data,
   aes (x = test, stratum = interpretation, alluvium = mrn,
     label = interpretation, fill = interpretation)) +
   #geom_alluvium (fill = "darkgrey", na.rm = TRUE) +
@@ -256,9 +286,9 @@ figure_3a <- ggplot (data,
     )
   )
 
-ggsave ("../figures/figure-2a.png", dpi = 1200, height = 15, width = 20, units = "cm")
+ggsave ("../figures/figure-3a.png", dpi = 1200, height = 15, width = 20, units = "cm")
 
-#Figure 2b
+#Figure 3b
 
 data_1 <- pfts %>%
   group_by (mrn) %>%
@@ -671,7 +701,7 @@ figure <- ggplot () +
   annotate ("text", x = 5.5, y = 0.5, label = table[[6,6]], size = 3, family = "Helvetica", fontface = 2) +
   coord_cartesian(clip = "off")
 
-ggsave ("../figures/figure-2b.png", dpi = 1200, width = 20, height = 20, units = "cm")
+ggsave ("../figures/figure-3b.png", dpi = 1200, width = 20, height = 20, units = "cm")
 
 
 ################################################################################
@@ -711,41 +741,13 @@ pfts_all %>%
   filter (age >= 18 & age <= 80) %>% 
   nrow ()
 
+
+
 ################################################################################
 ## e-Figure 2
 ################################################################################
 
-data <- pfts %>%
-  select (tlc_z_score, fvc_z_score) %>% 
-  mutate (interpretation = case_when (
-    fvc_z_score < -1.645 ~ "FVC Abnormal",
-    TRUE ~ "FVC Normal")
-  ) %>% 
-  mutate (interpretation = as.factor (interpretation))
-
-figure <- ggplot (data, aes (x = tlc_z_score, fill = interpretation)) +
-  geom_histogram (bins = 30, alpha = 0.7, position = "identity", color = "black") +
-  xlab ("TLC Z-Score") +
-  ylab ("Number of PFTs") +
-  xlim (-7.5, 5) +
-  geom_segment (aes(x = -1.645, xend = -1.645, y = 0, yend = 11000), linetype = "dashed") +
-  theme_classic (base_size = 10) +
-  scale_fill_manual (
-    name = "",  # Custom legend title
-    values = c("FVC Normal" = "#374E55FF", "FVC Abnormal" = "#DF8F44FF"),
-    labels = c("FVC Normal" = "FVC Normal", "FVC Abnormal" = "FVC Abnormal")
-  ) +
-  theme (text = element_text (family = "Arial")) +
-  annotate ("text", x = -2.75, y = 10500, label = "Z-score = -1.645", size = unit (3, "pt"), family = "Arial")  
-  
-
-ggsave ("../figures/e-figure-2.png", dpi = 1200, width = 20, height = 10, units = "cm")
-
-################################################################################
-## e-Figure 3
-################################################################################
-
-# e-Figure 3a
+# e-Figure 2a
 
 mrns <- pfts %>%
   arrange (date) %>%
@@ -868,7 +870,7 @@ data <- data %>%
     "Mixed")
   )
 
-figure_3a <- ggplot (data,
+figure <- ggplot (data,
   aes (x = test, stratum = interpretation, alluvium = mrn,
     label = interpretation, fill = interpretation)) +
   #geom_alluvium (fill = "darkgrey", na.rm = TRUE) +
@@ -939,9 +941,9 @@ figure_3a <- ggplot (data,
     )
   )
 
-ggsave ("../figures/e-figure-3a.png", dpi = 1200, height = 15, width = 20, units = "cm")
+ggsave ("../figures/e-figure-2a.png", dpi = 1200, height = 15, width = 20, units = "cm")
 
-#e-Figure 3b
+#e-Figure 2b
 
 data_1 <- pfts %>%
   group_by (mrn) %>%
@@ -1376,4 +1378,4 @@ figure <- ggplot () +
   annotate ("text", x = 5.5, y = 0.5, label = table[[6,6]], size = 3, family = "Helvetica", fontface = 2) +
   coord_cartesian(clip = "off")
 
-ggsave ("../figures/e-figure-3b.png", dpi = 1200, width = 20, height = 20, units = "cm")
+ggsave ("../figures/e-figure-2b.png", dpi = 1200, width = 20, height = 20, units = "cm")

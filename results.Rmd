@@ -1358,3 +1358,92 @@ print_ci (
 )
 
 ```
+
+ED visit with respiratory symptoms
+
+```{r}
+
+data <- pfts %>% 
+  filter (fev1_fvc_z_score >= -1.645 & fvc_z_score >= -1.645) %>% 
+  mutate (event = case_when (
+    is.na (date_ed) == 0 ~ 1,
+    dead == 1 ~ 2,
+    TRUE ~ 0)
+  ) %>%
+  mutate (time = case_when (
+    event == 1 ~ interval (date, date_ed) %/% months (1),
+    TRUE ~ interval (date, date_last) %/% months (1))
+  ) %>% 
+  select (
+    age,
+    sex,
+    fev1_z_score,
+    fvc_z_score,
+    fev1_fvc_z_score,
+    restriction,
+    event,
+    time
+  ) %>% 
+  drop_na () %>% 
+  mutate (time = pmax (time, 0))
+
+model_ed_unadjusted <- tidy (
+  CSC (
+    Hist (time, event) ~ restriction,
+    data = data
+  )$models[[1]],
+  conf.int = TRUE,
+  exponentiate = TRUE
+)
+
+model_ed_adjusted <- tidy (
+  CSC (
+    Hist (time, event) ~ restriction + age + sex + fev1_z_score + fvc_z_score + 
+      fev1_fvc_z_score,
+    data = data
+  )$models[[1]],
+  conf.int = TRUE,
+  exponentiate = TRUE
+)
+
+model_ed_unadjusted
+model_ed_adjusted
+
+```
+
+Death
+
+```{r}
+
+data <- pfts %>%
+  filter (fev1_fvc_z_score >= -1.645 & fvc_z_score >= -1.645) %>%
+  mutate (time = interval (date, date_last) %/% months (1)) %>%
+  filter (time > 0) %>%
+  select (
+    age,
+    sex,
+    race,
+    fev1_z_score,
+    fvc_z_score,
+    fev1_fvc_z_score,
+    restriction,
+    event = dead,
+    time
+  ) %>% 
+  drop_na ()
+
+model_death_unadjusted <- tidy (
+  coxph (Surv (time, event) ~ restriction, data = data, x = TRUE),
+  conf.int = TRUE,
+  exponentiate = TRUE
+)
+
+model_death_adjusted <- tidy (
+  coxph (Surv (time, event) ~ restriction + age + sex + fev1_z_score +
+    fvc_z_score + fev1_fvc_z_score, data = data, x = TRUE),
+  conf.int = TRUE,
+  exponentiate = TRUE
+)
+
+model_death_unadjusted
+model_death_adjusted
