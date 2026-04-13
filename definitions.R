@@ -1,3 +1,13 @@
+expression_emphysema <- "(?i)emphysema|emphysematous|centrilobular|panlobular|paraseptal"
+
+expression_honeycombing <- "(?i)honeycomb(ing|ed)?|subpleural\\s*cystic\\s*changes"
+
+expression_reticulation <- "(?i)reticulation|reticular|intralobular\\s*lines|net-like"
+
+expression_thickening <- "(?i)(bronchial|peribronchial|airway)\\s*(wall)?\\s*(thickening|thickened|prominence|prominent|fullness|cuffing|cuffed)"
+
+expression_traction <- "(?i)traction\\s*bronchiectasis|traction\\s*bronchiolectasis"
+
 # icd_ed_respiratory <- c (
 #   
 #   "D86.9", # Sarcoidosis, unspecified
@@ -940,6 +950,47 @@ icd_ph <- c (
 #   "M45.A8", #  …… of sacral and sacrococcygeal region
 #   "M45.AB" #  …… of multiple sites in spine  
 # )
+
+interpretation_copd <- list (
+  bronchial_wall_thick = "(?i)bronchial wall thick|peribronchial thicken|bronchial wall thicken",
+  bullous = "(?i)bulla|bullae|bullous",
+  chronic_bronchitis = "(?i)chronic bronchitis",
+  chronic_obstructive = "(?i)chronic obstructive pulmonary disease|\\bcopd\\b",
+  copd = "(?i)\\bcopd\\b",
+  emphysema = "(?i)emphysema|emphysematous|centrilobular|panlobular|paraseptal|panacinar",
+  flattening_diaphragm = "(?i)flatten.{0,10}diaphragm|diaphragm.{0,10}flatten|depressed diaphragm",
+  hyperinflated = "(?i)hyperinflat|air trapping|increased lung volume|lung hyperexpan",
+  hyperinflation = "(?i)hyperinflat|air trapping|increased lung volume|lung hyperexpan"
+)
+
+interpretation_ild <- list (
+  alveolar_proteinosis = "(?i)alveolar proteinosis|pulmonary alveolar proteinosis|\\bpap\\b",
+  connective_tissue = "(?i)connective tissue disease|CTD.{0,10}ILD|connective tissue.{0,10}lung",
+  desquamative = "(?i)desquamative|\\bdip\\b",
+  eosinophilic_pneumonia = "(?i)eosinophilic pneumonia|pulmonary eosinophilia",
+  fibrosis = "(?i)fibrosis|fibrotic|fibrosing",
+  honeycomb = "(?i)honeycomb|honeycombing",
+  hypersensitivity = "(?i)hypersensitivity pneumonitis|\\bhp\\b|extrinsic allergic alveolitis",
+  ild = "(?i)\\bild\\b|interstitial lung disease",
+  interstitial_abnormality = "(?i)interstitial abnormalit",
+  interstitial_cystic = "(?i)interstitial cystic",
+  interstitial_disease = "(?i)interstitial disease",
+  interstitial_nodularity = "(?i)interstitial nodularit",
+  interstitial_pneumonia = "(?i)interstitial pneumonia|interstitial pneumonitis",
+  ipf = "(?i)\\bipf\\b|idiopathic pulmonary fibrosis",
+  langerhans = "(?i)langerhans|pulmonary langerhans|\\bplch\\b",
+  lam = "(?i)lymphangioleiomyomatosis|\\blam\\b",
+  lip = "(?i)lymphoid interstitial pneumonia|\\blip\\b",
+  nsip = "(?i)\\bnsip\\b|nonspecific interstitial pneumonia|non.specific interstitial pneumonia",
+  organizing_pneumonia = "(?i)organizing pneumonia|\\bcop\\b|\\bboop\\b|bronchiolitis obliterans",
+  pneumoconiosis = "(?i)pneumoconiosis|asbestosis|silicosis|coal worker",
+  pulmonary_fibrosis = "(?i)pulmonary fibrosis",
+  respiratory_bronchiolitis = "(?i)respiratory bronchiolitis|\\brb.ild\\b",
+  reticular = "(?i)reticular|reticulation|reticulonodular",
+  sarcoidosis = "(?i)sarcoidosis|sarcoid",
+  traction_bronchiectasis = "(?i)traction bronchiectasis",
+  uip = "(?i)\\buip\\b|usual interstitial pneumonia"
+)
 
 nlp_asthma <- c (
   "asthma",

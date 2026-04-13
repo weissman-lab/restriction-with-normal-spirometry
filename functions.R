@@ -32,6 +32,464 @@ get_diagnosis_percentage <- function (data, diagnosis, type, year) {
   
 }
 
+get_model <- function (data, outcome) {
+
+  predictors <- c (
+    "restriction",
+    "age",
+    "sex",
+    "height",
+    "fev1_z_score",
+    "fvc_z_score",
+    "fev1_fvc_z_score"
+  )
+  
+  predictors <- predictors [sapply (predictors, function(p) {
+    col <- data[[p]]
+    !is.factor(col) || nlevels (droplevels (col)) >= 2
+  })]  
+
+  formula <- reformulate (termlabels = predictors, response = outcome)
+  
+  model <- tidy (
+    glm (
+      formula = formula,
+      family = "binomial",
+      data = data
+    ), conf.int = TRUE, exponentiate = TRUE
+  )
+
+  return (model)
+
+}
+
+get_model_restriction <- function (data, outcome) {
+
+  predictors <- c (
+    "normal_spirometry",
+    "age",
+    "sex",
+    "height",
+    "tlc_z_score"
+  )
+  
+  predictors <- predictors [sapply (predictors, function(p) {
+    col <- data[[p]]
+    !is.factor(col) || nlevels (droplevels (col)) >= 2
+  })]  
+
+  formula <- reformulate (termlabels = predictors, response = outcome)
+  
+  model <- tidy (
+    glm (
+      formula = formula,
+      family = "binomial",
+      data = data
+    ), conf.int = TRUE, exponentiate = TRUE
+  )
+
+  return (model)
+
+}
+
+get_model_specific <- function (data, outcome) {
+
+  predictors <- c (
+    "restriction",
+    "age",
+    "sex",
+    "height",
+    "fev1_z_score_2012",
+    "fvc_z_score_2012",
+    "fev1_fvc_z_score_2012"
+  )
+  
+  predictors <- predictors [sapply (predictors, function(p) {
+    col <- data[[p]]
+    !is.factor(col) || nlevels (droplevels (col)) >= 2
+  })]  
+
+  formula <- reformulate (termlabels = predictors, response = outcome)
+  
+  model <- tidy (
+    glm (
+      formula = formula,
+      family = "binomial",
+      data = data
+    ), conf.int = TRUE, exponentiate = TRUE
+  )
+
+  return (model)
+
+}
+
+get_model_ph <- function (data, outcome) {
+  
+  if (outcome == "ed") {
+  
+    data <- data %>% 
+      filter (fev1_fvc_z_score >= -1.645 & fvc_z_score >= -1.645) %>% 
+      mutate (event = case_when (
+        is.na (date_ed) == 0 ~ 1,
+        dead == 1 ~ 2,
+        TRUE ~ 0)
+      ) %>%
+      mutate (time = case_when (
+        event == 1 ~ interval (date, date_ed) %/% months (1),
+        TRUE ~ interval (date, date_last) %/% months (1))
+      ) %>% 
+      select (
+        age,
+        sex,
+        height,
+        fev1_z_score,
+        fvc_z_score,
+        fev1_fvc_z_score,
+        restriction,
+        event,
+        time
+      ) %>% 
+      drop_na () %>% 
+      mutate (time = pmax (time, 0))
+
+    predictors <- c (
+      "restriction",
+      "age",
+      "sex",
+      "height",
+      "fev1_z_score",
+      "fvc_z_score",
+      "fev1_fvc_z_score"
+    )
+    
+    predictors <- predictors [sapply (predictors, function(p) {
+      col <- data [[p]]
+      !is.factor (col) || nlevels (droplevels (col)) >= 2
+    })]
+    
+    formula <- reformulate(
+      termlabels = predictors,
+      response = "Hist(time, event)"
+    )
+    
+    model <- tidy (
+      CSC (
+        # Hist (time, event) ~ restriction + age + sex + height + fev1_z_score +
+        #   fvc_z_score + fev1_fvc_z_score,
+        formula,
+        data = data
+      )$models[[1]],
+      conf.int = TRUE,
+      exponentiate = TRUE
+    )
+    
+  }
+  
+  if (outcome == "death") {
+    
+    data <- data %>%
+      filter (fev1_fvc_z_score >= -1.645 & fvc_z_score >= -1.645) %>%
+      mutate (time = interval (date, date_last) %/% months (1)) %>%
+      filter (time > 0) %>%
+    select (
+      age,
+      sex,
+      height,
+      race,
+      fev1_z_score,
+      fvc_z_score,
+      fev1_fvc_z_score,
+      restriction,
+      event = dead,
+      time
+    ) %>% 
+    drop_na ()
+    
+    predictors <- c (
+      "restriction",
+      "age",
+      "sex",
+      "height",
+      "fev1_z_score",
+      "fvc_z_score",
+      "fev1_fvc_z_score"
+    )
+    
+    predictors <- predictors [sapply (predictors, function(p) {
+      col <- data [[p]]
+      !is.factor (col) || nlevels (droplevels (col)) >= 2
+    })]
+    
+    formula <- reformulate(
+      termlabels = predictors,
+      response = "Surv (time, event)"
+    )    
+
+    model <- tidy (
+      coxph (
+        # Surv (time, event) ~ restriction + age + sex + height + 
+        # fev1_z_score + fvc_z_score + fev1_fvc_z_score,
+        formula,
+        data = data, x = TRUE
+      ),
+      conf.int = TRUE,
+      exponentiate = TRUE
+    )
+    
+  }
+  
+  return (model)
+  
+}
+
+get_model_specific_ph <- function (data, outcome) {
+  
+  if (outcome == "ed") {
+  
+    data <- data %>% 
+      filter (fev1_fvc_z_score_2012 >= -1.645 & fvc_z_score_2012 >= -1.645) %>% 
+      mutate (event = case_when (
+        is.na (date_ed) == 0 ~ 1,
+        dead == 1 ~ 2,
+        TRUE ~ 0)
+      ) %>%
+      mutate (time = case_when (
+        event == 1 ~ interval (date, date_ed) %/% months (1),
+        TRUE ~ interval (date, date_last) %/% months (1))
+      ) %>% 
+      select (
+        age,
+        sex,
+        height,
+        fev1_z_score_2012,
+        fvc_z_score_2012,
+        fev1_fvc_z_score_2012,
+        restriction,
+        event,
+        time
+      ) %>% 
+      drop_na () %>% 
+      mutate (time = pmax (time, 0))
+
+    predictors <- c (
+      "restriction",
+      "age",
+      "sex",
+      "height",
+      "fev1_z_score_2012",
+      "fvc_z_score_2012",
+      "fev1_fvc_z_score_2012"
+    )
+    
+    predictors <- predictors [sapply (predictors, function(p) {
+      col <- data [[p]]
+      !is.factor (col) || nlevels (droplevels (col)) >= 2
+    })]
+    
+    formula <- reformulate(
+      termlabels = predictors,
+      response = "Hist(time, event)"
+    )
+    
+    model <- tidy (
+      CSC (
+        # Hist (time, event) ~ restriction + age + sex + height + fev1_z_score +
+        #   fvc_z_score + fev1_fvc_z_score,
+        formula,
+        data = data
+      )$models[[1]],
+      conf.int = TRUE,
+      exponentiate = TRUE
+    )
+    
+  }
+  
+  if (outcome == "death") {
+    
+    data <- data %>%
+      filter (fev1_fvc_z_score_2012 >= -1.645 & fvc_z_score_2012 >= -1.645) %>%
+      mutate (time = interval (date, date_last) %/% months (1)) %>%
+      filter (time > 0) %>%
+    select (
+      age,
+      sex,
+      height,
+      race,
+      fev1_z_score_2012,
+      fvc_z_score_2012,
+      fev1_fvc_z_score_2012,
+      restriction,
+      event = dead,
+      time
+    ) %>% 
+    drop_na ()
+    
+    predictors <- c (
+      "restriction",
+      "age",
+      "sex",
+      "height",
+      "fev1_z_score_2012",
+      "fvc_z_score_2012",
+      "fev1_fvc_z_score_2012"
+    )
+    
+    predictors <- predictors [sapply (predictors, function(p) {
+      col <- data [[p]]
+      !is.factor (col) || nlevels (droplevels (col)) >= 2
+    })]
+    
+    formula <- reformulate(
+      termlabels = predictors,
+      response = "Surv (time, event)"
+    )    
+
+    model <- tidy (
+      coxph (
+        # Surv (time, event) ~ restriction + age + sex + height + 
+        # fev1_z_score + fvc_z_score + fev1_fvc_z_score,
+        formula,
+        data = data, x = TRUE
+      ),
+      conf.int = TRUE,
+      exponentiate = TRUE
+    )
+    
+  }
+  
+  return (model)
+  
+}
+
+get_model_ph_restriction <- function (data, outcome) {
+  
+  if (outcome == "ed") {
+  
+    data <- data %>% 
+      filter (fev1_fvc_z_score >= -1.645 & fvc_z_score >= -1.645) %>% 
+      mutate (event = case_when (
+        is.na (date_ed) == 0 ~ 1,
+        dead == 1 ~ 2,
+        TRUE ~ 0)
+      ) %>%
+      mutate (time = case_when (
+        event == 1 ~ interval (date, date_ed) %/% months (1),
+        TRUE ~ interval (date, date_last) %/% months (1))
+      ) %>% 
+      select (
+        age,
+        sex,
+        height,
+        tlc_z_score,
+        normal_spirometry,
+        event,
+        time
+      ) %>% 
+      drop_na () %>% 
+      mutate (time = pmax (time, 0))
+
+    predictors <- c (
+      "normal_spirometry",
+      "age",
+      "sex",
+      "height",
+      "tlc_z_score"
+    )
+    
+    predictors <- predictors [sapply (predictors, function(p) {
+      col <- data [[p]]
+      !is.factor (col) || nlevels (droplevels (col)) >= 2
+    })]
+    
+    formula <- reformulate(
+      termlabels = predictors,
+      response = "Hist(time, event)"
+    )
+    
+    model <- tidy (
+      CSC (
+        # Hist (time, event) ~ restriction + age + sex + height + fev1_z_score +
+        #   fvc_z_score + fev1_fvc_z_score,
+        formula,
+        data = data
+      )$models[[1]],
+      conf.int = TRUE,
+      exponentiate = TRUE
+    )
+    
+  }
+  
+  if (outcome == "death") {
+    
+    data <- data %>%
+      filter (fev1_fvc_z_score >= -1.645 & fvc_z_score >= -1.645) %>%
+      mutate (time = interval (date, date_last) %/% months (1)) %>%
+      filter (time > 0) %>%
+    select (
+      age,
+      sex,
+      height,
+      race,
+      tlc_z_score,
+      normal_spirometry,
+      event = dead,
+      time
+    ) %>% 
+    drop_na ()
+    
+    predictors <- c (
+      "normal_spirometry",
+      "age",
+      "sex",
+      "height",
+      "tlc_z_score"
+    )
+    
+    predictors <- predictors [sapply (predictors, function(p) {
+      col <- data [[p]]
+      !is.factor (col) || nlevels (droplevels (col)) >= 2
+    })]
+    
+    formula <- reformulate(
+      termlabels = predictors,
+      response = "Surv (time, event)"
+    )    
+
+    model <- tidy (
+      coxph (
+        # Surv (time, event) ~ restriction + age + sex + height + 
+        # fev1_z_score + fvc_z_score + fev1_fvc_z_score,
+        formula,
+        data = data, x = TRUE
+      ),
+      conf.int = TRUE,
+      exponentiate = TRUE
+    )
+    
+  }
+  
+  return (model)
+  
+}
+
+get_finding <- function (text, finding) {
+  
+  sentences <- str_split(text, "(?<=[.!?])\\s+") %>% unlist()
+  
+  finding <- paste (unlist (finding), collapse = "|")
+  
+  target_sentences <- sentences [str_detect (sentences, finding)]
+  
+  if (length (target_sentences) == 0) return (0)
+  
+  negation  <- "(?i)\\b(no|none|negative|without|absent|absence of|not\\s*seen)\\b"
+
+  is_present <- any (!str_detect(target_sentences, negation))
+  
+  return (as.numeric (is_present))
+  
+}
+
 get_mu <- function (age, height, sex, parameter) {
   
   if (parameter == "dlco") {
@@ -1680,6 +2138,83 @@ print_annotation <- function (model, adjusted) {
   }
   
   return (annotation)
+  
+}
+
+print_estimate <- function (model) {
+  
+  estimate <- paste (
+    format (round (model$estimate [[2]], 2), nsmall = 2),
+    " (",
+    format (round (model$conf.low [[2]], 2), nsmall = 2),
+    " \u2013 ",
+    format (round (model$conf.high [[2]], 2), nsmall = 2),
+    ")",
+    sep = ""
+  )
+  
+  return (estimate)
+  
+}
+
+print_estimate_hr <- function (model) {
+  
+  estimate <- paste (
+    format (round (model$estimate [[1]], 2), nsmall = 2),
+    " (",
+    format (round (model$conf.low [[1]], 2), nsmall = 2),
+    " \u2013 ",
+    format (round (model$conf.high [[1]], 2), nsmall = 2),
+    ")",
+    sep = ""
+  )
+  
+  return (estimate)
+  
+}
+
+print_model <- function (model) {
+  
+  estimate <- sprintf ("%.2f", model [[2, 2]])
+  low <- sprintf ("%.2f", model [[2, 6]])
+  high <- sprintf ("%.2f", model [[2, 7]])
+  
+  result <- paste (
+    estimate, " (", low, "--", high, ")",
+    sep = ""
+  )
+  
+  return (result)
+  
+}
+
+print_model_line <- function (model, line) {
+  
+  estimate <- sprintf ("%.2f", model [[line, 2]])
+  low <- sprintf ("%.2f", model [[line, 6]])
+  high <- sprintf ("%.2f", model [[line, 7]])
+  
+  result <- paste (
+    estimate, " (", low, "--", high, ")",
+    sep = ""
+  )
+  
+  return (result)
+  
+}
+
+print_model_ph <- function (model) {
+  
+  estimate <- sprintf ("%.2f", model [[1, 2]])
+  low <- sprintf ("%.2f", model [[1, 6]])
+  high <- sprintf ("%.2f", model [[1, 7]])
+  
+  result <- paste (
+    estimate, " (", low, "--", high, ")",
+    sep = ""
+  )
+  
+  return (result)
   
 }
 

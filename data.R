@@ -25,7 +25,7 @@ pfts_breeze <- pfts_breeze %>%
     middle_name,
     dob,
     date,
-    location = site,
+    lab = site,
     age,
     sex,
     height,
@@ -107,7 +107,7 @@ pfts_reference <- pfts_reference %>%
     middle_name = Middlename,
     dob = Date_Of_Birth,
     date = `Test Date`,
-    location = Location,
+    lab = Location,
     age = Age,
     sex = BiologicalGender,
     height = Height,
@@ -226,7 +226,7 @@ pfts_vyaire <- pfts_pre %>%
     middle_name,
     dob,
     date,
-    location,
+    lab,
     age,
     sex,
     height,
@@ -270,7 +270,7 @@ rm (pfts_post)
 #     middle_name = Middlename,
 #     dob = Date_of_Birth,
 #     date = `Visit Date`,
-#     location = Location,
+#     lab = Location,
 #     age = Age,
 #     sex = BiologicalGender,
 #     height = Height,
@@ -427,30 +427,30 @@ pfts <- pfts %>%
     ethnicity == "Not Hispanic or Latino" ~ 2) # Not Hispanic
   ) %>% 
   mutate (ethnicity = as.factor (ethnicity)) %>% 
-  mutate (location = case_when (
-    location == "HUP" |
-    location == "University of Pennsylvania Health System" |
-    location == "University of Pennsylvania Hospital" |
-    location == "UPHS" |
-    location == "UPHS Pulmonary" |
-    location == "UPHS Pulmonary Diagnostic Services" |
-    location == "UPHS Pulmonary Service" |
-    location == "UPHS Respiratory Care Services" ~ 1,
-    location == "Penn Presbyterian Allergy & Asthma" |
-    location == "Penn Presbyterian Hospital" |
-    location == "Penn Presbyterian Medical Center" |
-    location == "Penn Presbyterian Medical Center Pulmonary Lab" |
-    location == "Penn Presbyterian Medical Center." |
-    location == "Pmuc" |
-    location == "PMUC" |
-    location == "PPMC Harron Lung Center" |
-    location == "Presbyterian Medical Center" ~ 2,
-    location == "Pennsylvania Hospital" |
-    location == "PMWS" |
-    location == "PMWS 9th Floor" ~ 3,
-    location == "CCH" ~ 4)
+  mutate (lab = case_when (
+    lab == "HUP" |
+    lab == "University of Pennsylvania Health System" |
+    lab == "University of Pennsylvania Hospital" |
+    lab == "UPHS" |
+    lab == "UPHS Pulmonary" |
+    lab == "UPHS Pulmonary Diagnostic Services" |
+    lab == "UPHS Pulmonary Service" |
+    lab == "UPHS Respiratory Care Services" ~ 1,
+    lab == "Penn Presbyterian Allergy & Asthma" |
+    lab == "Penn Presbyterian Hospital" |
+    lab == "Penn Presbyterian Medical Center" |
+    lab == "Penn Presbyterian Medical Center Pulmonary Lab" |
+    lab == "Penn Presbyterian Medical Center." |
+    lab == "Pmuc" |
+    lab == "PMUC" |
+    lab == "PPMC Harron Lung Center" |
+    lab == "Presbyterian Medical Center" ~ 2,
+    lab == "Pennsylvania Hospital" |
+    lab == "PMWS" |
+    lab == "PMWS 9th Floor" ~ 3,
+    lab == "CCH" ~ 4)
   ) %>% 
-  mutate (location = as.factor (location)) %>% 
+  mutate (lab = as.factor (lab)) %>% 
   rowwise () %>%
   mutate (fev1_z_score = get_z_score (age, height, sex, "fev1", fev1), .after = fev1) %>%
   mutate (fev1_z_score_2012 = get_z_score_2012 (age, height, sex, race, "fev1", fev1), .after = fev1_z_score) %>% 
@@ -476,7 +476,7 @@ pfts <- pfts %>%
     fev1_fvc_z_score >= -1.645 & fvc_z_score < -1.645 &
       tlc_z_score < -1.645 ~ "Restrictive with Abnormal Spirometry",
     fev1_fvc_z_score < -1.645 & tlc_z_score < -1.645 ~ "Mixed",
-    TRUE ~ "Normal")
+    fvc_z_score >= -1.645 & fev1_fvc_z_score >= -1.645 & tlc_z_score >= -1.645 ~ "Normal")
   ) %>%
   mutate (interpretation = factor (interpretation, levels = c (
     "Normal",
@@ -523,7 +523,7 @@ pfts <- pfts %>%
   mutate (response_2012 = as.factor (response_2012)) %>% 
   mutate (comments = str_to_lower (comments)) %>%
   mutate (comments = str_replace_all (comments, ",", "")) %>%
-  mutate (effort = case_when (
+  mutate (effort = case_when(
     str_detect (comments, "efforts appeared inconsistent") |
     str_detect (comments, "effort could be stronger") |
     str_detect (comments, "effort is variable") |
@@ -532,16 +532,14 @@ pfts <- pfts %>%
     str_detect (comments, "efforts were variable") |
     str_detect (comments, "effort was variable") |
     str_detect (comments, "fair effort") |
-    #str_detect (comments, "fvc reported") |
     str_detect (comments, "inconsistenteffort") |
     str_detect (comments, "poor effort") |
     str_detect (comments, "questionable effort") |
     str_detect (comments, "questionable patient effort") |
-    #str_detect (comments, "reported fvc") |
     str_detect (comments, "suboptimal effort") |
     str_detect (comments, "uneven effort") |
     str_detect (comments, "variable effort") |
-    str_detect (comments, "weak effort") ~ 0,    
+    str_detect (comments, "weak effort") ~ 0,
     str_detect (comments, "adequate effort") |
     str_detect (comments, "adequate patient effort") |
     str_detect (comments, "best effort throughout") |
@@ -549,9 +547,9 @@ pfts <- pfts %>%
     str_detect (comments, "effort was good") |
     str_detect (comments, "good effort") |
     str_detect (comments, "good patient coordination and effort") |
-    str_detect (comments, "goodpatient comprehension and effort") |
     str_detect (comments, "good patient effort") |
     str_detect (comments, "good pt effort") |
+    str_detect (comments, "goodpatient comprehension and effort") |
     str_detect (comments, "great effort") |
     str_detect (comments, "maximal effort") |
     str_detect (comments, "repeatable effort") ~ 1)
@@ -579,121 +577,7 @@ pfts <- pfts %>%
     wheeze == 5 ~ 0) # no wheeze
   ) %>%
   mutate (wheeze = as.factor (wheeze)) %>% 
-  # mutate (diagnosis = str_to_lower (diagnosis)) %>%
-  # mutate (diagnosis = str_replace_all (diagnosis, " ", "")) %>%
-  # mutate (cough = case_when (
-  #   str_detect (diagnosis, "786.2") |
-  #   str_detect (diagnosis, "r05") |
-  #   str_detect (diagnosis, "cough") ~ 1,
-  #   TRUE ~ 0), .after = diagnosis
-  # ) %>%
-  # mutate (dyspnea = case_when (
-  #   ((str_detect (diagnosis, "786.0") &
-  #     !(str_detect (diagnosis, "786.00") |
-  #       str_detect (diagnosis, "786.01") |
-  #       str_detect (diagnosis, "786.02") |
-  #       str_detect (diagnosis, "786.03") |
-  #       str_detect (diagnosis, "786.04") |
-  #       str_detect (diagnosis, "786.05") |
-  #       str_detect (diagnosis, "786.07") |
-  #       str_detect (diagnosis, "786.09"))) |
-  #    str_detect (diagnosis, "r06.0") |
-  #    str_detect (diagnosis, "doe") |
-  #    str_detect (diagnosis, "dyspnea") |
-  #    str_detect (diagnosis, "sob")  |
-  #    str_detect (diagnosis, "shortofbreath") |
-  #    str_detect (diagnosis, "shortnessofbreath")
-  #   ) & (str_detect (diagnosis, "bronchiolitisobliterans") == 0) ~ 1,
-  #   TRUE ~ 0), .after = cough
-  # ) %>%
-  # mutate (wheeze = case_when (
-  #   str_detect (diagnosis, "786.07") |
-  #   str_detect (diagnosis, "r06.2") |
-  #   str_detect (diagnosis, "wheez") ~ 1,
-  #   TRUE ~ 0), .after = dyspnea
-  # ) %>%
-  # mutate (asthma = case_when (
-  #   str_detect (diagnosis, "493") |
-  #   str_detect (diagnosis, "abpa") |
-  #   str_detect (diagnosis, "asthma") |
-  #   str_detect (diagnosis, "exerciseinducedbronchospasm") |
-  #   str_detect (diagnosis, "j45") |
-  #   str_detect (diagnosis, "reactiveairway") ~ 1,
-  #   TRUE ~ 0), .after = wheeze
-  # ) %>%
-  # mutate (bronchiectasis = case_when (
-  #   str_detect (diagnosis, "bronchiectasis") |
-  #   (str_detect (diagnosis, "cf") &
-  #      !(str_detect (diagnosis, "idiopathicfibrosingalveolitis"))) |
-  #   str_detect (diagnosis, "cysticfibrosis") ~ 1,
-  #   TRUE ~ 0), .after = asthma
-  # ) %>%
-  # mutate (chest_wall = sample (0:1, n(), replace = TRUE), .after = bronchiectasis) %>% # placeholder
-  # mutate (copd = case_when (
-  #   str_detect (diagnosis, "496") |
-  #   str_detect (diagnosis, "alpha1") |
-  #   str_detect (diagnosis, "alphaone") |
-  #   str_detect (diagnosis, "alpha-1") |
-  #   str_detect (diagnosis, "copd") |
-  #   str_detect (diagnosis, "chronicbronchitis") |
-  #   str_detect (diagnosis, "chronicobstructivepulmonary") |
-  #   str_detect (diagnosis, "emphysema") ~ 1,
-  #   TRUE ~ 0), .after = chest_wall
-  # ) %>%
-  # mutate (ild = case_when (
-  #   str_detect (diagnosis, "515") |
-  #   str_detect (diagnosis, "516") |
-  #   str_detect (diagnosis, "alveolitis") |
-  #   str_detect (diagnosis, "berylliosis") |
-  #   str_detect (diagnosis, "birt-hogg-dube") |
-  #   str_detect (diagnosis, "hypersensitivitypneumonitis") |
-  #   str_detect (diagnosis, "ild") |
-  #   str_detect (diagnosis, "interstial") |
-  #   str_detect (diagnosis, "interstital") |
-  #   str_detect (diagnosis, "interstitial") |
-  #   str_detect (diagnosis, "ipf") |
-  #   str_detect (diagnosis, "j84.9") |
-  #   str_detect (diagnosis, "lam") |
-  #   str_detect (diagnosis, "lymphangioleiomyomatosis") |
-  #   str_detect (diagnosis, "nsip") |
-  #   str_detect (diagnosis, "pneumonitis") |
-  #   str_detect (diagnosis, "pulmfibrosis") |
-  #   str_detect (diagnosis, "pulmonaryfibrosis") |
-  #   str_detect (diagnosis, "radiationfibrosis") |
-  #   str_detect (diagnosis, "radiationpneumonitis") |
-  #   str_detect (diagnosis, "rheumatoidlungdisease") |
-  #   str_detect (diagnosis, "sarcoid") |
-  #   str_detect (diagnosis, "sarcoidosis") |
-  #   str_detect (diagnosis, "uip") ~ 1,
-  #   TRUE ~ 0), .after = copd
-  # ) %>%
-  # mutate (neuromuscular = sample (0:1, n(), replace = TRUE), .after = ild) %>% # placeholder
-  # mutate (ph = case_when (
-  #   str_detect (diagnosis, "cteph") |
-  #   str_detect (diagnosis, "pah") |
-  #   str_detect (diagnosis, "pulm.htn") |
-  #   str_detect (diagnosis, "pulmhtn") |
-  #   str_detect (diagnosis, "pulmhypertension") |
-  #   str_detect (diagnosis, "pulmonaryarterialhypertension") |
-  #   str_detect (diagnosis, "pulmonaryarteryhypertension") |
-  #   str_detect (diagnosis, "pulmonaryhtn") |
-  #   str_detect (diagnosis, "pulmonaryhypertension") ~ 1,
-  #   TRUE ~ 0), .after = neuromuscular
-  # ) %>%
-  # mutate (rheumatic = sample (0:1, n(), replace = TRUE), .after = ph) %>% # placeholder
-  # mutate (cough = as.factor (cough)) %>%
-  # mutate (dyspnea = as.factor (dyspnea)) %>%
-  # mutate (wheeze = as.factor (wheeze)) %>%
-  # mutate (asthma = as.factor (asthma)) %>%
-  # mutate (bronchiectasis = as.factor (bronchiectasis)) %>%
-  # mutate (chest_wall = as.factor (chest_wall)) %>%
-  # mutate (copd = as.factor (copd)) %>%
-  # mutate (ild = as.factor (ild)) %>%
-  # mutate (neuromuscular = as.factor (neuromuscular)) %>%
-  # mutate (ph = as.factor (ph)) %>%
-  # mutate (rheumatic = as.factor (rheumatic))
   arrange (date) %>%
-  #arrange (patient) %>%
   arrange (mrn) %>% 
   rowid_to_column ("test")
  
@@ -1118,20 +1002,24 @@ visits <- read_csv ("../data/visits.csv")
 map <- read_csv ("../data/map.csv")
 
 pfts <- pfts %>% 
-  left_join (map, by = "mrn") %>% 
-  mutate (none = case_when (
-    asthma == 0 &
-    bronchiectasis == 0 &
-    chest_wall == 0 &
-    copd == 0 &
-    ild == 0 &
-    neuromuscular == 0 ~ 1,
+  left_join (map, by = "mrn") %>%
+  mutate (any = case_when (
     asthma == 1 |
     bronchiectasis == 1 |
     chest_wall == 1 |
     copd == 1 |
     ild == 1 |
-    neuromuscular == 1 ~ 0)
+    neuromuscular == 1 ~ 1,
+    asthma == 0 &
+    bronchiectasis == 0 &
+    chest_wall == 0 &
+    copd == 0 &
+    ild == 0 &
+    neuromuscular == 0 ~ 0)    
+  ) %>% 
+  mutate (none = case_when (
+    any == 1 ~ 0,
+    any == 0 ~ 1)
   ) %>% 
   mutate (asthma = as.factor (asthma)) %>% 
   mutate (bronchiectasis = as.factor (bronchiectasis)) %>% 
@@ -1140,6 +1028,63 @@ pfts <- pfts %>%
   mutate (ild = as.factor (ild)) %>% 
   mutate (neuromuscular = as.factor (neuromuscular)) %>% 
   mutate (none = as.factor (none))
+
+# For sensitivity analysis, add diagnoses if at least 1 ICD Code Present
+
+diagnoses <- read_parquet ("../data/diagnoses.parquet")
+
+diagnoses <- diagnoses %>% 
+  select (mrn, diagnosis = code)
+
+diagnoses_asthma <- diagnoses %>% 
+  filter (diagnosis %in% icd_asthma) %>% 
+  select (mrn) %>% 
+  distinct () %>% 
+  mutate (asthma_icd = 1)
+
+diagnoses_bronchiectasis <- diagnoses %>% 
+  filter (diagnosis %in% icd_bronchiectasis) %>% 
+  select (mrn) %>% 
+  distinct () %>% 
+  mutate (bronchiectasis_icd = 1)
+
+diagnoses_chest_wall <- diagnoses %>% 
+  filter (diagnosis %in% icd_chest_wall) %>% 
+  select (mrn) %>% 
+  distinct () %>% 
+  mutate (chest_wall_icd = 1)
+
+diagnoses_copd <- diagnoses %>% 
+  filter (diagnosis %in% icd_copd)  %>% 
+  select (mrn) %>% 
+  distinct () %>% 
+  mutate (copd_icd = 1)
+
+diagnoses_ild <- diagnoses %>% 
+  filter (diagnosis %in% icd_ild) %>% 
+  select (mrn) %>% 
+  distinct () %>% 
+  mutate (ild_icd = 1)
+
+diagnoses_neuromuscular <- diagnoses %>% 
+  filter (diagnosis %in% icd_neuromuscular) %>% 
+  select (mrn) %>% 
+  distinct () %>% 
+  mutate (neuromuscular_icd = 1)
+
+pfts <- pfts %>% 
+  left_join (diagnoses_asthma, by = "mrn") %>% 
+  left_join (diagnoses_bronchiectasis, by = "mrn") %>% 
+  left_join (diagnoses_chest_wall, by = "mrn") %>% 
+  left_join (diagnoses_copd, by = "mrn") %>% 
+  left_join (diagnoses_ild, by = "mrn") %>% 
+  left_join (diagnoses_neuromuscular, by = "mrn") %>% 
+  mutate (asthma_icd = replace_na (asthma_icd, 0)) %>% 
+  mutate (bronchiectasis_icd = replace_na (bronchiectasis_icd, 0)) %>% 
+  mutate (chest_wall_icd = replace_na (chest_wall_icd, 0)) %>% 
+  mutate (copd_icd = replace_na (copd_icd, 0)) %>% 
+  mutate (ild_icd = replace_na (ild_icd, 0)) %>% 
+  mutate (neuromuscular_icd = replace_na (neuromuscular_icd, 0))
 
 ################################################################################
 ## Label with Mortality Data
@@ -1222,7 +1167,6 @@ imaging <- imaging %>%
   ) %>%
   filter (modality == "ct") %>% 
   select (
-    #patient = mrn,
     mrn,
     imaging_date = order_time,
     order = order_proc_id,
@@ -1231,302 +1175,98 @@ imaging <- imaging %>%
   mutate (imaging_date = as.Date (imaging_date))
 
 impressions <- read_parquet ("../data/impressions.parquet")
+narratives <- read_parquet ("../data/narratives.parquet")
 
-impressions <- impressions %>% 
-  filter (!(impression == "" | impression == " " | is.na (impression))) %>%
-  select (
-    order = order_proc_id,
-    line,
-    impression
-  ) %>%
-  arrange (line) %>%
-  group_by (order) %>%
-  summarize (impression = paste (impression, collapse = " ")) %>%
-  mutate (impression = str_squish (impression)) %>%
-  select (
-    order,
-    impression
+interpretations <- bind_rows (
+  narratives %>% mutate (section = 1, text = narrative),
+  impressions %>% mutate (section = 2, text = impression)
+) %>%
+arrange (mrn, order_proc_id, section, line) %>%
+group_by (mrn, order_proc_id) %>%
+summarise (interpretation = paste (text, collapse = " "), .groups = "drop") %>% 
+select (order = order_proc_id, interpretation)
+
+interpretations <- imaging %>%
+  left_join (interpretations, by = "order") %>% 
+  filter (is.na (interpretation) == 0) %>%
+  mutate (interpretation = str_squish (interpretation)) %>% 
+  mutate (interpretation = tolower (interpretation)) %>%
+  mutate (emphysema = map_dbl (interpretation, ~get_finding (.x, expression_emphysema))) %>%
+  mutate (honeycombing = map_dbl (interpretation, ~get_finding (.x, expression_honeycombing))) %>%
+  mutate (reticulation = map_dbl (interpretation, ~get_finding (.x, expression_reticulation))) %>%  
+  mutate (thickening = map_dbl (interpretation, ~get_finding (.x, expression_thickening))) %>% 
+  mutate (traction = map_dbl (interpretation, ~get_finding (.x, expression_traction))) %>%
+  group_by (mrn) %>% 
+  summarize (
+    across (
+      c( emphysema, honeycombing, reticulation, thickening, traction),
+      ~ max (.x, na.rm = TRUE)
+    ),
+    .groups = "drop"
   )
 
-impressions <- imaging %>%
-  left_join (impressions, by = "order") %>% 
-  filter (is.na (impression) == 0) %>% 
-  mutate (imaging_copd = case_when (
-    str_detect (tolower (impression), "bronchial wall thick") |
-    str_detect (tolower (impression), "bullous") |
-    str_detect (tolower (impression), "chronic bronchitis") |
-    str_detect (tolower (impression), "copd") |
-    str_detect (tolower (impression), "emphysema") |
-    str_detect (tolower (impression), "flattening of the diaphragm") |
-    str_detect (tolower (impression), "hyperinflated") |
-    str_detect (tolower (impression), "hyperinflation") |
-    str_detect (tolower (impression), "obstructive") ~ 1,
-    TRUE ~ 0)
+pfts <- pfts %>% 
+  left_join (interpretations, by = "mrn")
+
+write_csv (pfts, "../data/pfts.csv")
+
+################################################################################
+## Label with Provider Specialty
+################################################################################
+
+procedures <- read_parquet ("../data/procedures.parquet")
+providers <- read_parquet ("../data/providers.parquet")
+
+procedures <- procedures %>% 
+  select (
+    mrn = pat_mrn_id,
+    procedure_date = order_time,
+    provider = ord_creatr_user_id_did,
+    description
+  ) %>% 
+  filter (
+    description == "FLOW VOLUME LOOP" |
+    description == "PLETHYSMOGRAPHY LUNG VOLUMES W/WO AIRWAY RESIST" |
+    description == "PULMONARY FUNCTION TEST" |
+    description == "PULMONARY FUNCTION TESTING" |
+    description == "SPIROMETRY" |      
+    description == "SPIROMETRY (OFFICE)" |
+    description == "SPIROMETRY PRE/POST BRONCHODILATOR (OFFICE)"
+  ) %>% 
+  distinct ()
+
+providers <- providers %>%
+  filter (
+    provider_type == "Physician"
+  ) %>% 
+  select (
+    provider = visit_user_id_did,
+    specialty = team_or_specialty
   ) %>%
-  mutate (imaging_ild = case_when (
-    str_detect (tolower (impression), "alveolar proteinosis") |
-    str_detect (tolower (impression), "connective tissue disease") |
-    str_detect (tolower (impression), "desquamative")|
-    str_detect (tolower (impression), "eosinophilic pneumonia") |
-    str_detect (tolower (impression), "fibrosis") |
-    str_detect (tolower (impression), "fibrotic") |
-    str_detect (tolower (impression), "honeycomb") |
-    str_detect (tolower (impression), "hypersensitivity pneumonitis") |
-    str_detect (tolower (impression), " ild") |
-    str_detect (tolower (impression), "interstitial abnormality") |
-    str_detect (tolower (impression), "interstitial cystic") |
-    str_detect (tolower (impression), "interstitial disease") |
-    str_detect (tolower (impression), "interstitial lung") |
-    str_detect (tolower (impression), "interstitial nodularity") |
-    str_detect (tolower (impression), "interstitial pneumonia") |
-    str_detect (tolower (impression), "interstitial pneumonitis") |
-    str_detect (tolower (impression), "ipf") |
-    str_detect (tolower (impression), "langerhans") |
-    str_detect (tolower (impression), "lymphangioleiomyomatosis") |
-    str_detect (tolower (impression), "lymphoid interstitial pneumonia") |
-    str_detect (tolower (impression), "nsip") |
-    str_detect (tolower (impression), "organizing pneumonia") |
-    str_detect (tolower (impression), "pneumoconiosis") |
-    str_detect (tolower (impression), "pulmonary fibrosis") |
-    str_detect (tolower (impression), "respiratory bronchiolitis") |
-    str_detect (tolower (impression), "reticular") |
-    str_detect (tolower (impression), "reticulation") |
-    str_detect (tolower (impression), "sarcoidosis") |
-    str_detect (tolower (impression), "traction bronchiectasis") |
-    str_detect (tolower (impression), "uip") ~ 1,
-    TRUE ~ 0)
-  ) %>% 
-  #select (patient, imaging_date, imaging_copd, imaging_ild)
-  select (mrn, imaging_date, imaging_copd, imaging_ild)
-
-impressions_first <- impressions %>% 
-  #group_by (patient) %>%
-  group_by (mrn) %>% 
-  slice_min (imaging_date, n = 1) %>% 
-  ungroup () %>% 
-  select (
-    mrn,
-    first_imaging_date = imaging_date
-  ) %>% 
   distinct ()
 
-impressions_last <- impressions %>% 
-  #group_by (patient) %>%
-  group_by (mrn) %>%
-  slice_max (imaging_date, n = 1) %>% 
-  ungroup () %>% 
-  select (
-    mrn,
-    last_imaging_date = imaging_date
-  ) %>% 
-  distinct ()
-  
-impressions_copd <- impressions %>% 
-  #group_by (patient) %>%
-  group_by (mrn) %>% 
-  filter (imaging_copd == 1) %>% 
-  slice_min (imaging_date, n = 1) %>% 
-  ungroup () %>% 
-  select (
-    mrn,
-    copd_imaging_date = imaging_date
-  ) %>% 
-  distinct ()
-
-impressions_ild <- impressions %>% 
-  #group_by (patient) %>%
-  group_by (mrn) %>%
-  filter (imaging_ild == 1) %>% 
-  slice_min (imaging_date, n = 1) %>% 
-  ungroup () %>% 
-  select (
-    mrn,
-    ild_imaging_date = imaging_date
-  ) %>% 
+procedures <- procedures %>% 
+  left_join (providers, by = "provider") %>% 
+  select (mrn, procedure_date, specialty) %>% 
+  distinct () %>%
+  mutate (specialty = case_when (
+    specialty == "Internal Medicine;Pulmonary Medicine" |
+    specialty == "Pulmonary Medicine" |
+    specialty == "Pulmonary Medicine;Internal Medicine" ~ 1, # Pulmonology
+    specialty == "Family Medicine" |
+    specialty == "Family Medicine;Internal Medicine" |
+    specialty == "Geriatrics" |
+    specialty == "Internal Medicine" |
+    specialty == "Internal Medicine;Family Medicine" ~ 2, # Primary care
+    is.na (specialty) == 0 ~ 3) # Other
+  ) %>%
   distinct ()
 
 pfts <- pfts %>% 
-  left_join (impressions_first, by = "mrn") %>% 
-  left_join (impressions_last, by = "mrn") %>% 
-  left_join (impressions_copd, by = "mrn") %>% 
-  left_join (impressions_ild, by = "mrn") %>%
-  mutate (copd_imaging = case_when (
-    copd_imaging_date <= date ~ 1,
-    first_imaging_date <= date ~ 0)
-  ) %>%
-  mutate (copd_imaging = as.factor (copd_imaging)) %>% 
-  mutate (ild_imaging = case_when (
-    ild_imaging_date <= date ~ 1,
-    first_imaging_date <= date ~ 0)
-  ) %>%
-  mutate (ild_imaging = as.factor (ild_imaging)) %>% 
-  mutate (time_to_copd_imaging = difftime (copd_imaging_date, date, units = "days")) %>%
-  mutate (time_to_copd_imaging = as.double (time_to_copd_imaging)) %>%
-  mutate (time_to_copd_imaging = case_when (
-    time_to_copd_imaging >= 0 ~ time_to_copd_imaging,
-    time_to_copd_imaging < 0 ~ 0)
-  ) %>%   
-  mutate (time_to_ild_imaging = difftime (ild_imaging_date, date, units = "days")) %>%
-  mutate (time_to_ild_imaging = as.double (time_to_ild_imaging)) %>%
-  mutate (time_to_ild_imaging = case_when (
-    time_to_ild_imaging >= 0 ~ time_to_ild_imaging,
-    time_to_ild_imaging < 0 ~ 0)
-  )
-  
-# 
-# impressions_sample <- images %>% 
-#   select (impression) %>% 
-#   unnest_tokens (impression, impression, token = "sentences", to_lower = FALSE) %>% 
-#   filter (
-#     is.na (impression) == 0 & 
-#     impression != "1." &
-#     impression != "2." &
-#     impression != "3." &
-#     impression != "4." &
-#     impression != "5." &
-#     impression != "6." &
-#     impression != "7." &
-#     impression != "8."  
-#   ) %>% 
-#   sample_n (15000, FALSE)
-# 
-# impressions_sample <- impressions_sample %>%
-#   mutate (copd = case_when (
-#     str_detect (tolower (impression), "bronchial wall thick") |
-#       str_detect (tolower (impression), "bullous") |
-#       str_detect (tolower (impression), "chronic bronchitis") |
-#       str_detect (tolower (impression), "copd") |
-#       str_detect (tolower (impression), "emphysema") |
-#       str_detect (tolower (impression), "flattening of the diaphragm") |
-#       str_detect (tolower (impression), "hyperinflated") |
-#       str_detect (tolower (impression), "hyperinflation") |
-#       str_detect (tolower (impression), "obstructive") |
-#       str_detect (tolower (impression), "smoking") ~ 1,
-#     TRUE ~ 0)
-#   ) %>%
-#   mutate (ild = case_when (
-#     str_detect (tolower (impression), "alveolar proteinosis") |
-#       str_detect (tolower (impression), "connective tissue disease") |
-#       str_detect (tolower (impression), "cystic") |
-#       str_detect (tolower (impression), "eosinophilic pneumonia") |
-#       str_detect (tolower (impression), "fibrosis") |
-#       str_detect (tolower (impression), "honeycomb") |
-#       str_detect (tolower (impression), "hypersensitivity pneumonitis") |
-#       str_detect (tolower (impression), "ild") |
-#       str_detect (tolower (impression), "interstitial") |
-#       str_detect (tolower (impression), "lymphangioleiomyomatosis") |
-#       str_detect (tolower (impression), "lymphoid interstitial pneumonia") |
-#       str_detect (tolower (impression), "nsip") |
-#       str_detect (tolower (impression), "organizing pneumonia") |
-#       str_detect (tolower (impression), "pneumoconiosis") |
-#       str_detect (tolower (impression), "respiratory bronchiolitis") |
-#       str_detect (tolower (impression), "reticular") |
-#       str_detect (tolower (impression), "reticulation") |
-#       str_detect (tolower (impression), "rheumatic") |
-#       str_detect (tolower (impression), "sarcoidosis") |
-#       str_detect (tolower (impression), "traction bronchiectasis") |
-#       str_detect (tolower (impression), "uip") |
-#       str_detect (tolower (impression), "vasculitis") ~ 1,
-#     TRUE ~ 0)
-#   ) %>%
-#   rowid_to_column ("id") %>%
-#   select (id, impression, copd, ild)
-# 
-# impressions <- images %>% 
-#   select (impression)
-# 
-# write_csv (impressions_sample, "../data/impressions_to_be_labeled.csv")
-# write_csv (impressions, "../data/impressions.csv")
-# 
-# # DO: Manually label impressions and upload as ild_labeled.csv
-# 
-# source_python ("radiology.py")
-
-# images <- images %>%
-#   mutate (impression = str_to_lower (impression)) %>%
-#   mutate (abnormal_imaging = case_when (
-#     str_detect (impression, "bronchiectasis") |
-#     str_detect (impression, "chronic bronchitis") |
-#     str_detect (impression, "cyst") |
-#     str_detect (impression, "emphysema") |
-#     str_detect (impression, "fibrosis") |
-#     str_detect (impression, "nsip") |
-#     str_detect (impression, "traction bronchiectasis")
-#     ~ 1,
-#     TRUE ~ 0)
-#   ) %>%
-#   mutate (bronchitis_imaging = case_when (
-#     str_detect (impression, "chronic bronchitis") ~ 1,
-#     TRUE ~ 0)
-#   ) %>%
-#   mutate (emphysema_imaging = case_when (
-#     str_detect (impression, "emphysema") ~ 1,
-#     TRUE ~ 0)
-#   ) %>%
-#   mutate (ild_imaging = case_when (
-#     str_detect (impression, "fibrosis") |
-#     str_detect (impression, "fibrotic") ~ 1,
-#     TRUE ~ 0)
-#   ) %>%
-#   select (patient, imaging_date, abnormal_imaging)
-
-# y <- pfts %>%
-#   left_join (imaging, by = "patient") %>%
-#   mutate (abnormal = case_when (
-#     imaging_date < date & abnormal_imaging == 1 ~ 1,
-#     imaging_date < date & abnormal_imaging == 0 ~ 0)
-#   ) %>%
-#   group_by (test) %>%
-#   mutate (abnormal = max (abnormal, na.rm = TRUE)) %>%
-#   distinct (test, .keep_all = TRUE)
-#   
-#   
-# model_normal <- lm (tlc_z_score ~ fvc_z_score, data = filter (y, abnormal == 0))
-# model_abnormal <- lm (tlc_z_score ~ fvc_z_score, data = filter (y, abnormal == 1))
-# 
-#   group_by (test) %>%
-#   summarise (abnormal = max (abnormal))
-
-# x <- imaging %>%
-#   select (patient, ild_ct) %>%
-#   group_by (patient) %>%
-#   summarize (ild_ct = max (ild_ct))
-  
-
-# y <- pfts %>% 
-#   left_join (x, by = "patient")
-
-# cxr = date of first CXR
-# cxr_abnormal = date of first abnormal CXR
-# ct = date of first CT chest
-# ct_abnormal = date of first abnormal CT chest
-
-# data_cxr <- imaging_orders %>%
-#   filter (description == "XR CHEST 2 VIEWS" | description == "XR CHEST 1 VIEW") %>%
-#   arrange (order_time) %>%
-#   group_by (mrn) %>%
-#   filter (row_number () == 1) %>% # First CXR for each patient by date  
-#   ungroup () %>%
-#   select (
-#     patient = mrn,
-#     cxr = order_time
-#   ) %>%
-#   mutate (cxr = as.Date (cxr))
-# 
-# chest_imaging_order_proc_id <- imaging_orders %>%
-#   filter (
-#     str_detect (description, "XR CHEST") |
-#     str_detect (description, "CT CHEST")
-#   ) %>% 
-#   pull (order_proc_id)
-# 
-# pfts <- pfts %>%
-#   left_join (data_cxr, by = "patient")
-# 
-# "bronchiectasis"
-# "noactivediseaseseeninthechest"
-# "noevidenceofinterstitialfibrosis"
-# 
-# "interstitialdensities"
-  
+  left_join (procedures, by = join_by (mrn, closest (date >= procedure_date))) %>% 
+  select (-procedure_date) %>% 
+  distinct () %>%
+  group_by (mrn, date) %>%
+  slice (1) %>%
+  ungroup ()
 

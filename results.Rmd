@@ -27,6 +27,31 @@ pfts %>%
 
 ```
 
+Number of tests with normal spirometry
+
+```{r}
+
+pfts %>% 
+  filter (fvc_z_score >= -1.645 & fev1_fvc_z_score >= -1.645) %>% 
+  nrow () %>% 
+  comma ()
+
+```
+
+Percentage of tests with normal spirometry
+
+```{r}
+
+pfts %>% 
+  filter (fvc_z_score >= -1.645 & fev1_fvc_z_score >= -1.645) %>% 
+  nrow () %>%
+  divide_by (nrow (pfts)) %>% 
+  multiply_by (100) %>%
+  round (digits = 1) %>%
+  format (nsmall = 1)
+
+```
+
 Number of tests with restriction with normal spirometry
 
 ```{r}
@@ -49,47 +74,6 @@ pfts %>%
   multiply_by (100) %>%
   round (digits = 1) %>%
   format (nsmall = 1)
-
-```
-
-Confidence intervals for percentage of tests with normal spirometry and restriction 
-
-```{r}
-
-print_ci (
-  
-  exactci (
-    pfts %>%
-      filter (interpretation == "Restrictive with Normal Spirometry") %>%
-      nrow (),
-    pfts %>%
-      filter (fev1_fvc_z_score >= -1.645 & fvc_z_score >= -1.645) %>% 
-      nrow (),
-    0.95
-  )
-  
-)
-
-```
-
-Adjusted odds ratio of restriction in non-White patients
-
-```{r}
-
-data <- pfts %>%
-  filter (fvc_z_score >= -1.645 & fev1_fvc_z_score >= -1.645) %>% 
-  mutate (non_white = case_when (
-    race == 1 ~ 0,
-    race == 2 | race == 3 | race == 4 ~ 1)
-  ) %>% 
-  mutate (non_white = as.factor (non_white))
-
-tidy (glm (
-  formula = restriction ~ non_white + age + sex + fev1_z_score + fvc_z_score +
-    fev1_fvc_z_score,
-  family = "binomial",
-  data = data), conf.int = TRUE, exponentiate = TRUE
-)
 
 ```
 
