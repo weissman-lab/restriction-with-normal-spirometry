@@ -252,104 +252,6 @@ pfts_vyaire <- pfts_pre %>%
 rm (pfts_pre)
 rm (pfts_post)
 
-# pfts_vyaire <- rbind (
-#   read_xlsx ("../data/vyaire_pre_2020.xlsx"),
-#   read_xlsx ("../data/vyaire_2020.xlsx"),
-#   read_xlsx ("../data/vyaire_2021.xlsx"),
-#   read_xlsx ("../data/vyaire_2022.xlsx"),
-#   read_xlsx ("../data/vyaire_2023.xlsx"),
-#   read_xlsx ("../data/vyaire_2024.xlsx"),
-#   read_xlsx ("../data/vyaire_2025.xlsx")
-# )
-# 
-# pfts_vyaire <- pfts_vyaire %>% 
-#   select (
-#     mrn = `Patient ID`,
-#     last_name = Name,
-#     first_name = Firstname,
-#     middle_name = Middlename,
-#     dob = Date_of_Birth,
-#     date = `Visit Date`,
-#     lab = Location,
-#     age = Age,
-#     sex = BiologicalGender,
-#     height = Height,
-#     weight = Weight,
-#     diagnosis = Diagnosis,
-#     fev1 = `FEV 1`,
-#     fvc = `VC max`,
-#     tlc = TLC_Pleth,
-#     rv = RV_Pleth,
-#     raw = Raw,
-#     sgaw = sGaw,
-#     dlco = DLCO_SB,
-#     kco = `DLCO_SB / VA`,
-#     va = VA
-#   ) %>% 
-#   mutate (pack_years = NA, .after = weight) %>% 
-#   mutate (cough = NA, .after = pack_years) %>% 
-#   mutate (dyspnea = NA, .after = cough) %>% 
-#   mutate (wheeze = NA, .after = dyspnea) %>% 
-#   mutate (comments = NA, .after = va)
-# 
-# pfts_vyaire_pre_post <- read_xlsx ("../data/vyaire_pre_post.xlsx") %>% 
-#   select (
-#     mrn = `Patient ID`,
-#     last_name = Name,
-#     first_name = Firstname,
-#     middle_name = Middlename,
-#     dob = `Date of Birth`,
-#     date = `Visit Date`,
-#     fev1_post = `Post FEV 1`,
-#     fvc_post = `Post FVC`
-#   ) %>% 
-#   filter (is.na (fev1_post) == 0 | is.na (fvc_post) == 0) %>% 
-#   group_by (mrn, last_name, first_name, middle_name, dob, date) %>% 
-#   mutate (fev1_post = max (fev1_post)) %>% 
-#   mutate (fvc_post = max (fvc_post)) %>% 
-#   ungroup () %>% 
-#   distinct ()
-# 
-# pfts_vyaire <- pfts_vyaire %>% 
-#   left_join (pfts_vyaire_pre_post, by = c (
-#     "mrn",
-#     "last_name",
-#     "first_name",
-#     "middle_name",
-#     "dob",
-#     "date")
-#   ) %>% 
-#   relocate (fev1_post, .after = fvc) %>% 
-#   relocate (fvc_post, .after = fev1_post) %>% 
-#   mutate (dob = as.Date (mdy_hms (dob))) %>% 
-#   mutate (date = as.Date (mdy_hms (date))) %>%
-#   mutate (age = as.integer (age)) %>% 
-#   mutate (sex = case_when (
-#     sex == "male" ~ 1,
-#     sex == "female" ~ 2)
-#   ) %>%
-#   mutate (sex = as.factor (sex)) %>% 
-#   mutate (height = as.double (height)) %>% 
-#   mutate (height = height * 39.3701) %>%
-#   mutate (weight = as.double (weight)) %>% 
-#   mutate (weight = weight * 2.20462) %>%
-#   mutate (fev1 = as.double (fev1)) %>% 
-#   mutate (fvc = as.double (fvc)) %>% 
-#   mutate (fev1_post = as.double (fev1_post)) %>% 
-#   mutate (fvc_post = as.double (fvc_post)) %>% 
-#   mutate (tlc = as.double (tlc)) %>% 
-#   mutate (rv = as.double (rv)) %>% 
-#   mutate (raw = as.double (raw)) %>%
-#   mutate (raw = raw * 10.197) %>% 
-#   mutate (sgaw = as.double (sgaw)) %>%
-#   mutate (sgaw = sgaw / 10.197) %>% 
-#   mutate (dlco = as.double (dlco)) %>% 
-#   mutate (dlco = dlco * 2.987) %>% 
-#   mutate (kco = as.double (kco)) %>%
-#   mutate (kco = kco * 2.987) %>% 
-#   mutate (va = as.double (va)) %>% 
-#   mutate (source = "vyaire")
-  
 ################################################################################
 ## Combine Breeze and Vyaire Data
 ################################################################################
@@ -587,419 +489,403 @@ pfts <- pfts %>%
 
 ##### Number of encounters by NLP ####
 
-# reader <- ParquetFileReader$create ("../data/notes.parquet")
-# 
-# nlp <- tibble ()
-# 
-# for (i in seq_len (reader$num_row_groups)) {
-# 
-#   #print (i)
-# 
-#   batch <- reader$ReadRowGroup(i - 1)
-# 
-#   nlp_batch <- as_tibble (batch) %>%
-#     select (mrn, pat_enc_csn_id, line = note_line, text = note_text) %>%
-#     arrange (pat_enc_csn_id) %>%
-#     filter (!(text == "" | text == " " | is.na (text))) %>%
-#     arrange (line) %>%
-#     group_by (pat_enc_csn_id) %>%
-#     summarize (text = paste (text, collapse = " ")) %>%
-#     mutate (text = str_squish (text)) %>%
-#     mutate (text = str_to_lower (text)) %>%
-#     mutate (asthma = case_when (
-#       str_detect (text, paste (nlp_asthma, collapse = "|")) ~ 1,
-#       TRUE ~ 0)
-#     ) %>%
-#     mutate (bronchiectasis = case_when (
-#       str_detect (text, paste (nlp_bronchiectasis, collapse = "|")) ~ 1,
-#       TRUE ~ 0)
-#     ) %>%
-#     mutate (chest_wall = case_when (
-#       str_detect (text, paste (nlp_chest_wall, collapse = "|")) ~ 1,
-#       TRUE ~ 0)
-#     ) %>%
-#     mutate (copd = case_when (
-#       str_detect (text, paste (nlp_copd, collapse = "|")) ~ 1,
-#       TRUE ~ 0)
-#     ) %>%
-#     mutate (ild = case_when (
-#       str_detect (text, paste (nlp_ild, collapse = "|")) ~ 1,
-#       TRUE ~ 0)
-#     ) %>%
-#     mutate (neuromuscular = case_when (
-#       str_detect (text, paste (nlp_neuromuscular, collapse = "|")) ~ 1,
-#       TRUE ~ 0)
-#     ) %>%
-#     mutate (ph = case_when (
-#       str_detect (text, paste (nlp_ph, collapse = "|")) ~ 1,
-#       TRUE ~ 0)
-#     ) %>%         
-#     select (
-#       pat_enc_csn_id,
-#       asthma,
-#       bronchiectasis,
-#       chest_wall,
-#       copd,
-#       ild,
-#       neuromuscular,
-#       ph
-#     )
-# 
-#   nlp <- rbind (nlp, nlp_batch)
-# 
-#   rm (batch, nlp_batch)
-#   gc ()
-# 
-# }
-# 
-# encounters <- read_parquet ("../data/encounters.parquet") %>%
-#   filter (encounter_type == "Office Visit")
-# 
-# nlp <- encounters %>%
-#   select (pat_mrn_id, pat_enc_csn_id) %>%
-#   left_join (nlp, by = "pat_enc_csn_id") %>%
-#   select (-pat_enc_csn_id) %>% 
-#   group_by (pat_mrn_id) %>%
-#   summarise(across(everything(), ~sum(.x, na.rm = TRUE)), .groups = "drop") %>% 
-#   select (
-#     pat_mrn_id,
-#     asthma_nlp = asthma,
-#     bronchiectasis_nlp = bronchiectasis,
-#     chest_wall_nlp = chest_wall,
-#     copd_nlp = copd,
-#     ild_nlp = ild,
-#     neuromuscular_nlp = neuromuscular,
-#     ph_nlp = ph
-#   )
-#   
-# rm (encounters)
-# 
-# gc ()
-# 
-# write_csv (nlp, "../data/nlp.csv")
+reader <- ParquetFileReader$create ("../data/notes.parquet")
 
-nlp <- read_csv ("../data/nlp.csv")
+nlp <- tibble ()
+
+for (i in seq_len (reader$num_row_groups)) {
+
+  #print (i)
+
+  batch <- reader$ReadRowGroup(i - 1)
+
+  nlp_batch <- as_tibble (batch) %>%
+    select (mrn, pat_enc_csn_id, line = note_line, text = note_text) %>%
+    arrange (pat_enc_csn_id) %>%
+    filter (!(text == "" | text == " " | is.na (text))) %>%
+    arrange (line) %>%
+    group_by (pat_enc_csn_id) %>%
+    summarize (text = paste (text, collapse = " ")) %>%
+    mutate (text = str_squish (text)) %>%
+    mutate (text = str_to_lower (text)) %>%
+    mutate (asthma = case_when (
+      str_detect (text, paste (nlp_asthma, collapse = "|")) ~ 1,
+      TRUE ~ 0)
+    ) %>%
+    mutate (bronchiectasis = case_when (
+      str_detect (text, paste (nlp_bronchiectasis, collapse = "|")) ~ 1,
+      TRUE ~ 0)
+    ) %>%
+    mutate (chest_wall = case_when (
+      str_detect (text, paste (nlp_chest_wall, collapse = "|")) ~ 1,
+      TRUE ~ 0)
+    ) %>%
+    mutate (copd = case_when (
+      str_detect (text, paste (nlp_copd, collapse = "|")) ~ 1,
+      TRUE ~ 0)
+    ) %>%
+    mutate (ild = case_when (
+      str_detect (text, paste (nlp_ild, collapse = "|")) ~ 1,
+      TRUE ~ 0)
+    ) %>%
+    mutate (neuromuscular = case_when (
+      str_detect (text, paste (nlp_neuromuscular, collapse = "|")) ~ 1,
+      TRUE ~ 0)
+    ) %>%
+    mutate (ph = case_when (
+      str_detect (text, paste (nlp_ph, collapse = "|")) ~ 1,
+      TRUE ~ 0)
+    ) %>%
+    select (
+      pat_enc_csn_id,
+      asthma,
+      bronchiectasis,
+      chest_wall,
+      copd,
+      ild,
+      neuromuscular,
+      ph
+    )
+
+  nlp <- rbind (nlp, nlp_batch)
+
+  rm (batch, nlp_batch)
+  gc ()
+
+}
+
+encounters <- read_parquet ("../data/encounters.parquet") %>%
+  filter (encounter_type == "Office Visit")
+
+nlp <- encounters %>%
+  select (pat_mrn_id, pat_enc_csn_id) %>%
+  left_join (nlp, by = "pat_enc_csn_id") %>%
+  select (-pat_enc_csn_id) %>%
+  group_by (pat_mrn_id) %>%
+  summarise(across(everything(), ~sum(.x, na.rm = TRUE)), .groups = "drop") %>%
+  select (
+    pat_mrn_id,
+    asthma_nlp = asthma,
+    bronchiectasis_nlp = bronchiectasis,
+    chest_wall_nlp = chest_wall,
+    copd_nlp = copd,
+    ild_nlp = ild,
+    neuromuscular_nlp = neuromuscular,
+    ph_nlp = ph
+  )
+
+rm (encounters)
+
+gc ()
 
 ##### Number of encounters by ICD code ####
 
-# diagnoses <- read_parquet ("../data/diagnoses.parquet")
-# 
-# icd <- diagnoses %>%
-#   rename (icd = code) %>%
-#   mutate (asthma_icd = case_when (
-#     icd %in% icd_asthma ~ 1,
-#     TRUE ~ 0)
-#   ) %>%
-#   mutate (bronchiectasis_icd = case_when (
-#     icd %in% icd_bronchiectasis ~ 1,
-#     TRUE ~ 0)
-#   ) %>%
-#   mutate (chest_wall_icd = case_when (
-#     icd %in% icd_chest_wall ~ 1,
-#     TRUE ~ 0)
-#   ) %>%
-#   mutate (copd_icd = case_when (
-#     icd %in% icd_copd ~ 1,
-#     TRUE ~ 0)
-#   ) %>%
-#   mutate (ild_icd = case_when (
-#     icd %in% icd_ild ~ 1,
-#     TRUE ~ 0)
-#   ) %>%
-#   mutate (neuromuscular_icd = case_when (
-#     icd %in% icd_neuromuscular ~ 1,
-#     TRUE ~ 0)
-#   ) %>%
-#   mutate (ph_icd = case_when (
-#     icd %in% icd_ph ~ 1,
-#     TRUE ~ 0)
-#   ) %>%     
-#   select (
-#     pat_enc_csn_id,
-#     asthma_icd,
-#     bronchiectasis_icd,
-#     chest_wall_icd,
-#     copd_icd,
-#     ild_icd,
-#     neuromuscular_icd,
-#     ph_icd
-#   ) %>%
-#   group_by (pat_enc_csn_id) %>%
-#   summarize (
-#     asthma_icd = max (asthma_icd),
-#     bronchiectasis_icd = max (bronchiectasis_icd),
-#     chest_wall_icd = max (chest_wall_icd),
-#     copd_icd = max (copd_icd),
-#     ild_icd = max (ild_icd),
-#     neuromuscular_icd = max (neuromuscular_icd),
-#     ph_icd = max (ph_icd)
-#   ) %>%
-#   ungroup ()
-# 
-# encounters <- read_parquet ("../data/encounters.parquet") %>%
-#   filter (encounter_type == "Office Visit")
-# 
-# icd <- encounters %>%
-#   select (pat_mrn_id, pat_enc_csn_id) %>%
-#   left_join (icd, by = "pat_enc_csn_id") %>%
-#   group_by (pat_mrn_id) %>%
-#   summarize (
-#     asthma_icd = sum (asthma_icd, na.rm = TRUE),
-#     bronchiectasis_icd = sum (bronchiectasis_icd, na.rm = TRUE),
-#     chest_wall_icd = sum (chest_wall_icd, na.rm = TRUE),
-#     copd_icd = sum (copd_icd, na.rm = TRUE),
-#     ild_icd = sum (ild_icd, na.rm = TRUE),
-#     neuromuscular_icd = sum (neuromuscular_icd, na.rm = TRUE),
-#     ph_icd = sum (ph_icd, na.rm = TRUE),    
-#   ) %>%
-#   ungroup ()
-# 
-# rm (diagnoses)
-# rm (encounters)
-# 
-# gc ()
-# 
-# write_csv (icd, "../data/icd.csv")
+diagnoses <- read_parquet ("../data/diagnoses.parquet")
 
-icd <- read_csv ("../data/icd.csv")
+icd <- diagnoses %>%
+  rename (icd = code) %>%
+  mutate (asthma_icd = case_when (
+    icd %in% icd_asthma ~ 1,
+    TRUE ~ 0)
+  ) %>%
+  mutate (bronchiectasis_icd = case_when (
+    icd %in% icd_bronchiectasis ~ 1,
+    TRUE ~ 0)
+  ) %>%
+  mutate (chest_wall_icd = case_when (
+    icd %in% icd_chest_wall ~ 1,
+    TRUE ~ 0)
+  ) %>%
+  mutate (copd_icd = case_when (
+    icd %in% icd_copd ~ 1,
+    TRUE ~ 0)
+  ) %>%
+  mutate (ild_icd = case_when (
+    icd %in% icd_ild ~ 1,
+    TRUE ~ 0)
+  ) %>%
+  mutate (neuromuscular_icd = case_when (
+    icd %in% icd_neuromuscular ~ 1,
+    TRUE ~ 0)
+  ) %>%
+  mutate (ph_icd = case_when (
+    icd %in% icd_ph ~ 1,
+    TRUE ~ 0)
+  ) %>%
+  select (
+    pat_enc_csn_id,
+    asthma_icd,
+    bronchiectasis_icd,
+    chest_wall_icd,
+    copd_icd,
+    ild_icd,
+    neuromuscular_icd,
+    ph_icd
+  ) %>%
+  group_by (pat_enc_csn_id) %>%
+  summarize (
+    asthma_icd = max (asthma_icd),
+    bronchiectasis_icd = max (bronchiectasis_icd),
+    chest_wall_icd = max (chest_wall_icd),
+    copd_icd = max (copd_icd),
+    ild_icd = max (ild_icd),
+    neuromuscular_icd = max (neuromuscular_icd),
+    ph_icd = max (ph_icd)
+  ) %>%
+  ungroup ()
+
+encounters <- read_parquet ("../data/encounters.parquet") %>%
+  filter (encounter_type == "Office Visit")
+
+icd <- encounters %>%
+  select (pat_mrn_id, pat_enc_csn_id) %>%
+  left_join (icd, by = "pat_enc_csn_id") %>%
+  group_by (pat_mrn_id) %>%
+  summarize (
+    asthma_icd = sum (asthma_icd, na.rm = TRUE),
+    bronchiectasis_icd = sum (bronchiectasis_icd, na.rm = TRUE),
+    chest_wall_icd = sum (chest_wall_icd, na.rm = TRUE),
+    copd_icd = sum (copd_icd, na.rm = TRUE),
+    ild_icd = sum (ild_icd, na.rm = TRUE),
+    neuromuscular_icd = sum (neuromuscular_icd, na.rm = TRUE),
+    ph_icd = sum (ph_icd, na.rm = TRUE),
+  ) %>%
+  ungroup ()
+
+rm (diagnoses)
+rm (encounters)
+
+gc ()
 
 ##### Number of office visits per patient ####
 
-# encounters <- read_parquet ("../data/encounters.parquet") %>% 
-#   filter (encounter_type == "Office Visit")  
-# 
-# visits <- encounters %>%
-#   select (pat_mrn_id, pat_enc_csn_id) %>% 
-#   group_by (pat_mrn_id) %>% 
-#   summarize (visits = n ()) %>% 
-#   ungroup ()
-# 
-# rm (encounters)
-# 
-# write_csv (visits, "../data/visits.csv")
+encounters <- read_parquet ("../data/encounters.parquet") %>%
+  filter (encounter_type == "Office Visit")
 
-visits <- read_csv ("../data/visits.csv")
+visits <- encounters %>%
+  select (pat_mrn_id, pat_enc_csn_id) %>%
+  group_by (pat_mrn_id) %>%
+  summarize (visits = n ()) %>%
+  ungroup ()
+
+rm (encounters)
 
 #### Apply MAP algorithm ####
 
-# map <- visits %>%
-#   left_join (icd, by = "pat_mrn_id") %>% 
-#   left_join (nlp, by = "pat_mrn_id")
-# 
-# visits <- map %>% 
-#   pull (visits)
-# 
-# # Asthma
-# 
-# ICD <- map %>% 
-#   pull (asthma_icd)
-# 
-# NLP <- map %>% 
-#   pull (asthma_nlp)
-# 
-# mat <- Matrix (data = cbind (ICD, NLP), sparse = TRUE)
-# 
-# note <- Matrix (visits, ncol = 1, sparse = TRUE)
-# 
-# asthma_map <- MAP (
-#   mat = mat,
-#   note = note,
-#   full.output = TRUE,
-#   subset_sample = TRUE,
-#   subset_sample_size = 10000,
-#   verbose = TRUE
-# )
-# 
-# map <- map %>% 
-#   add_column (asthma = as.vector (asthma_map$scores)) %>% 
-#   mutate (asthma = case_when (
-#     asthma > asthma_map$cut.MAP ~ 1,
-#     TRUE ~ 0)
-#   )
-# 
-# # Bronchiectasis
-# 
-# ICD <- map %>% 
-#   pull (bronchiectasis_icd)
-# 
-# NLP <- map %>% 
-#   pull (bronchiectasis_nlp)
-# 
-# mat <- Matrix (data = cbind (ICD, NLP), sparse = TRUE)
-# 
-# note <- Matrix (visits, ncol = 1, sparse = TRUE)
-# 
-# bronchiectasis_map <- MAP (
-#   mat = mat,
-#   note = note,
-#   full.output = TRUE,
-#   subset_sample = TRUE,
-#   subset_sample_size = 10000,
-#   verbose = TRUE
-# )
-# 
-# map <- map %>% 
-#   add_column (bronchiectasis = as.vector (bronchiectasis_map$scores)) %>% 
-#   mutate (bronchiectasis = case_when (
-#     bronchiectasis > bronchiectasis_map$cut.MAP ~ 1,
-#     TRUE ~ 0)
-#   )
-# 
-# # Chest wall
-# 
-# ICD <- map %>% 
-#   pull (chest_wall_icd)
-# 
-# NLP <- map %>% 
-#   pull (chest_wall_nlp)
-# 
-# mat <- Matrix (data = cbind (ICD, NLP), sparse = TRUE)
-# 
-# note <- Matrix (visits, ncol = 1, sparse = TRUE)
-# 
-# chest_wall_map <- MAP (
-#   mat = mat,
-#   note = note,
-#   full.output = TRUE,
-#   subset_sample = TRUE,
-#   subset_sample_size = 10000,
-#   verbose = TRUE
-# )
-# 
-# map <- map %>% 
-#   add_column (chest_wall = as.vector (chest_wall_map$scores)) %>% 
-#   mutate (chest_wall = case_when (
-#     chest_wall > chest_wall_map$cut.MAP ~ 1,
-#     TRUE ~ 0)
-#   )
-# 
-# # COPD
-# 
-# ICD <- map %>% 
-#   pull (copd_icd)
-# 
-# NLP <- map %>% 
-#   pull (copd_nlp)
-# 
-# mat <- Matrix (data = cbind (ICD, NLP), sparse = TRUE)
-# 
-# note <- Matrix (visits, ncol = 1, sparse = TRUE)
-# 
-# copd_map <- MAP (
-#   mat = mat,
-#   note = note,
-#   full.output = TRUE,
-#   subset_sample = TRUE,
-#   subset_sample_size = 10000,
-#   verbose = TRUE
-# )
-# 
-# map <- map %>% 
-#   add_column (copd = as.vector (copd_map$scores)) %>% 
-#   mutate (copd = case_when (
-#     copd > copd_map$cut.MAP ~ 1,
-#     TRUE ~ 0)
-#   )
-# 
-# # ILD
-# 
-# ICD <- map %>% 
-#   pull (ild_icd)
-# 
-# NLP <- map %>% 
-#   pull (ild_nlp)
-# 
-# mat <- Matrix (data = cbind (ICD, NLP), sparse = TRUE)
-# 
-# note <- Matrix (visits, ncol = 1, sparse = TRUE)
-# 
-# ild_map <- MAP (
-#   mat = mat,
-#   note = note,
-#   full.output = TRUE,
-#   subset_sample = TRUE,
-#   subset_sample_size = 10000,
-#   verbose = TRUE
-# )
-# 
-# map <- map %>% 
-#   add_column (ild = as.vector (ild_map$scores)) %>% 
-#   mutate (ild = case_when (
-#     ild > ild_map$cut.MAP ~ 1,
-#     TRUE ~ 0)
-#   )
-# 
-# # Neuromuscular
-# 
-# ICD <- map %>% 
-#   pull (neuromuscular_icd)
-# 
-# NLP <- map %>% 
-#   pull (neuromuscular_nlp)
-# 
-# mat <- Matrix (data = cbind (ICD, NLP), sparse = TRUE)
-# 
-# note <- Matrix (visits, ncol = 1, sparse = TRUE)
-# 
-# neuromuscular_map <- MAP (
-#   mat = mat,
-#   note = note,
-#   full.output = TRUE,
-#   subset_sample = TRUE,
-#   subset_sample_size = 10000,
-#   verbose = TRUE
-# )
-# 
-# map <- map %>% 
-#   add_column (neuromuscular = as.vector (neuromuscular_map$scores)) %>% 
-#   mutate (neuromuscular = case_when (
-#     neuromuscular > neuromuscular_map$cut.MAP ~ 1,
-#     TRUE ~ 0)
-#   )
-# 
-# # Pulmonary hypertension
-# 
-# ICD <- map %>% 
-#   pull (ph_icd)
-# 
-# NLP <- map %>% 
-#   pull (ph_nlp)
-# 
-# mat <- Matrix (data = cbind (ICD, NLP), sparse = TRUE)
-# 
-# note <- Matrix (visits, ncol = 1, sparse = TRUE)
-# 
-# ph_map <- MAP (
-#   mat = mat,
-#   note = note,
-#   full.output = TRUE,
-#   subset_sample = TRUE,
-#   subset_sample_size = 10000,
-#   verbose = TRUE
-# )
-# 
-# map <- map %>% 
-#   add_column (ph = as.vector (ph_map$scores)) %>% 
-#   mutate (ph = case_when (
-#     ph > ph_map$cut.MAP ~ 1,
-#     TRUE ~ 0)
-#   )
-# 
-# map <- map %>% 
-#   select (
-#     mrn = pat_mrn_id,
-#     asthma,
-#     bronchiectasis,
-#     chest_wall,
-#     copd,
-#     ild,
-#     neuromuscular,
-#     ph
-#   )
-# 
-# write_csv (map, "../data/map.csv")
+map <- visits %>%
+  left_join (icd, by = "pat_mrn_id") %>%
+  left_join (nlp, by = "pat_mrn_id")
 
-map <- read_csv ("../data/map.csv")
+visits <- map %>%
+  pull (visits)
+
+# Asthma
+
+ICD <- map %>%
+  pull (asthma_icd)
+
+NLP <- map %>%
+  pull (asthma_nlp)
+
+mat <- Matrix (data = cbind (ICD, NLP), sparse = TRUE)
+
+note <- Matrix (visits, ncol = 1, sparse = TRUE)
+
+asthma_map <- MAP (
+  mat = mat,
+  note = note,
+  full.output = TRUE,
+  subset_sample = TRUE,
+  subset_sample_size = 10000,
+  verbose = TRUE
+)
+
+map <- map %>%
+  add_column (asthma = as.vector (asthma_map$scores)) %>%
+  mutate (asthma = case_when (
+    asthma > asthma_map$cut.MAP ~ 1,
+    TRUE ~ 0)
+  )
+
+# Bronchiectasis
+
+ICD <- map %>%
+  pull (bronchiectasis_icd)
+
+NLP <- map %>%
+  pull (bronchiectasis_nlp)
+
+mat <- Matrix (data = cbind (ICD, NLP), sparse = TRUE)
+
+note <- Matrix (visits, ncol = 1, sparse = TRUE)
+
+bronchiectasis_map <- MAP (
+  mat = mat,
+  note = note,
+  full.output = TRUE,
+  subset_sample = TRUE,
+  subset_sample_size = 10000,
+  verbose = TRUE
+)
+
+map <- map %>%
+  add_column (bronchiectasis = as.vector (bronchiectasis_map$scores)) %>%
+  mutate (bronchiectasis = case_when (
+    bronchiectasis > bronchiectasis_map$cut.MAP ~ 1,
+    TRUE ~ 0)
+  )
+
+# Chest wall
+
+ICD <- map %>%
+  pull (chest_wall_icd)
+
+NLP <- map %>%
+  pull (chest_wall_nlp)
+
+mat <- Matrix (data = cbind (ICD, NLP), sparse = TRUE)
+
+note <- Matrix (visits, ncol = 1, sparse = TRUE)
+
+chest_wall_map <- MAP (
+  mat = mat,
+  note = note,
+  full.output = TRUE,
+  subset_sample = TRUE,
+  subset_sample_size = 10000,
+  verbose = TRUE
+)
+
+map <- map %>%
+  add_column (chest_wall = as.vector (chest_wall_map$scores)) %>%
+  mutate (chest_wall = case_when (
+    chest_wall > chest_wall_map$cut.MAP ~ 1,
+    TRUE ~ 0)
+  )
+
+# COPD
+
+ICD <- map %>%
+  pull (copd_icd)
+
+NLP <- map %>%
+  pull (copd_nlp)
+
+mat <- Matrix (data = cbind (ICD, NLP), sparse = TRUE)
+
+note <- Matrix (visits, ncol = 1, sparse = TRUE)
+
+copd_map <- MAP (
+  mat = mat,
+  note = note,
+  full.output = TRUE,
+  subset_sample = TRUE,
+  subset_sample_size = 10000,
+  verbose = TRUE
+)
+
+map <- map %>%
+  add_column (copd = as.vector (copd_map$scores)) %>%
+  mutate (copd = case_when (
+    copd > copd_map$cut.MAP ~ 1,
+    TRUE ~ 0)
+  )
+
+# ILD
+
+ICD <- map %>%
+  pull (ild_icd)
+
+NLP <- map %>%
+  pull (ild_nlp)
+
+mat <- Matrix (data = cbind (ICD, NLP), sparse = TRUE)
+
+note <- Matrix (visits, ncol = 1, sparse = TRUE)
+
+ild_map <- MAP (
+  mat = mat,
+  note = note,
+  full.output = TRUE,
+  subset_sample = TRUE,
+  subset_sample_size = 10000,
+  verbose = TRUE
+)
+
+map <- map %>%
+  add_column (ild = as.vector (ild_map$scores)) %>%
+  mutate (ild = case_when (
+    ild > ild_map$cut.MAP ~ 1,
+    TRUE ~ 0)
+  )
+
+# Neuromuscular
+
+ICD <- map %>%
+  pull (neuromuscular_icd)
+
+NLP <- map %>%
+  pull (neuromuscular_nlp)
+
+mat <- Matrix (data = cbind (ICD, NLP), sparse = TRUE)
+
+note <- Matrix (visits, ncol = 1, sparse = TRUE)
+
+neuromuscular_map <- MAP (
+  mat = mat,
+  note = note,
+  full.output = TRUE,
+  subset_sample = TRUE,
+  subset_sample_size = 10000,
+  verbose = TRUE
+)
+
+map <- map %>%
+  add_column (neuromuscular = as.vector (neuromuscular_map$scores)) %>%
+  mutate (neuromuscular = case_when (
+    neuromuscular > neuromuscular_map$cut.MAP ~ 1,
+    TRUE ~ 0)
+  )
+
+# Pulmonary hypertension
+
+ICD <- map %>%
+  pull (ph_icd)
+
+NLP <- map %>%
+  pull (ph_nlp)
+
+mat <- Matrix (data = cbind (ICD, NLP), sparse = TRUE)
+
+note <- Matrix (visits, ncol = 1, sparse = TRUE)
+
+ph_map <- MAP (
+  mat = mat,
+  note = note,
+  full.output = TRUE,
+  subset_sample = TRUE,
+  subset_sample_size = 10000,
+  verbose = TRUE
+)
+
+map <- map %>%
+  add_column (ph = as.vector (ph_map$scores)) %>%
+  mutate (ph = case_when (
+    ph > ph_map$cut.MAP ~ 1,
+    TRUE ~ 0)
+  )
+
+map <- map %>%
+  select (
+    mrn = pat_mrn_id,
+    asthma,
+    bronchiectasis,
+    chest_wall,
+    copd,
+    ild,
+    neuromuscular,
+    ph
+  )
 
 pfts <- pfts %>% 
   left_join (map, by = "mrn") %>%

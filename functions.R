@@ -174,8 +174,6 @@ get_model_ph <- function (data, outcome) {
     
     model <- tidy (
       CSC (
-        # Hist (time, event) ~ restriction + age + sex + height + fev1_z_score +
-        #   fvc_z_score + fev1_fvc_z_score,
         formula,
         data = data
       )$models[[1]],
@@ -227,8 +225,6 @@ get_model_ph <- function (data, outcome) {
 
     model <- tidy (
       coxph (
-        # Surv (time, event) ~ restriction + age + sex + height + 
-        # fev1_z_score + fvc_z_score + fev1_fvc_z_score,
         formula,
         data = data, x = TRUE
       ),
@@ -293,8 +289,6 @@ get_model_specific_ph <- function (data, outcome) {
     
     model <- tidy (
       CSC (
-        # Hist (time, event) ~ restriction + age + sex + height + fev1_z_score +
-        #   fvc_z_score + fev1_fvc_z_score,
         formula,
         data = data
       )$models[[1]],
@@ -346,8 +340,6 @@ get_model_specific_ph <- function (data, outcome) {
 
     model <- tidy (
       coxph (
-        # Surv (time, event) ~ restriction + age + sex + height + 
-        # fev1_z_score + fvc_z_score + fev1_fvc_z_score,
         formula,
         data = data, x = TRUE
       ),
@@ -408,8 +400,6 @@ get_model_ph_restriction <- function (data, outcome) {
     
     model <- tidy (
       CSC (
-        # Hist (time, event) ~ restriction + age + sex + height + fev1_z_score +
-        #   fvc_z_score + fev1_fvc_z_score,
         formula,
         data = data
       )$models[[1]],
@@ -457,8 +447,6 @@ get_model_ph_restriction <- function (data, outcome) {
 
     model <- tidy (
       coxph (
-        # Surv (time, event) ~ restriction + age + sex + height + 
-        # fev1_z_score + fvc_z_score + fev1_fvc_z_score,
         formula,
         data = data, x = TRUE
       ),
@@ -995,9 +983,6 @@ get_mu_2012 <- function (age, height, sex, race, parameter) {
       
       if (is.na (race) == 0 && race == 1) race_correction <- 0
       if (is.na (race) == 0 && race == 2) race_correction <- -0.1589
-      #if (race == 3) race_correction <- -0.0351
-      #if (race == 4) race_correction <- -0.0881
-      #if (race == 3 | race == 4 | race == 5 | is.na (race)) race_correction <- -0.0708
         
       mu <- exp (-10.342 + 2.2196 * log (height) + 0.0574 * log (age) + race_correction + m_spline)
       
@@ -1024,9 +1009,6 @@ get_mu_2012 <- function (age, height, sex, race, parameter) {
       
       if (is.na (race) == 0 && race == 1) race_correction <- 0
       if (is.na (race) == 0 && race == 2) race_correction <- -0.1484
-      #if (race == 3) race_correction <- -0.0149
-      #if (race == 4) race_correction <- -0.1208
-      #if (race == 3 | race == 4 | race == 5 | is.na (race)) race_correction <- -0.0708
         
       mu <- exp (-9.6987 + 2.1211 * log (height) - 0.0270 * log (age) + race_correction + m_spline)    
       
@@ -1059,9 +1041,6 @@ get_mu_2012 <- function (age, height, sex, race, parameter) {
       
       if (is.na (race) == 0 && race == 1) race_correction <- 0
       if (is.na (race) == 0 && race == 2) race_correction <- -0.1684
-      #if (race == 3) race_correction <- -0.0405
-      #if (race == 4) race_correction <- -0.1177
-      #if (race == 3 | race == 4 | race == 5 | is.na (race)) race_correction <- -0.0825
         
       mu <- exp (-11.2281 + 2.4135 * log (height) + 0.0865 * log (age) + race_correction + m_spline)  
       
@@ -1087,9 +1066,6 @@ get_mu_2012 <- function (age, height, sex, race, parameter) {
       
       if (is.na (race) == 0 && race == 1) race_correction <- 0
       if (is.na (race) == 0 && race == 2) race_correction <- -0.1555
-      #if (race == 3) race_correction <- -0.0262
-      #if (race == 4) race_correction <- -0.1516
-      #if (race == 3 | race == 4 | race == 5 | is.na (race)) race_correction <- -0.0833
         
       mu <- exp (-10.4030 + 2.2633 * log (height) + 0.0234 * log (age) + race_correction + m_spline)        
       
@@ -1122,9 +1098,6 @@ get_mu_2012 <- function (age, height, sex, race, parameter) {
       
       if (is.na (race) == 0 && race == 1) race_correction <- 0
       if (is.na (race) == 0 && race == 2) race_correction <- 0.0079
-      #if (race == 3) race_correction <- 0.0055
-      #if (race == 4) race_correction <- 0.0283
-      #if (race == 3 | race == 4 | race == 5 | is.na (race)) race_correction <- 0.0106
         
       mu <- exp (0.7403 + -0.1595 * log (height) + -0.0366 * log (age) + race_correction + m_spline)  
       
@@ -1151,9 +1124,6 @@ get_mu_2012 <- function (age, height, sex, race, parameter) {
       
       if (is.na (race) == 0 && race == 1) race_correction <- 0
       if (is.na (race) == 0 && race == 2) race_correction <- 0.0055
-      #if (race == 3) race_correction <- 0.0088
-      #if (race == 4) race_correction <- 0.0285
-      #if (race == 3 | race == 4 | race == 5 | is.na (race)) race_correction <- 0.0106
         
       mu <- exp (0.5506 - 0.1078 * log (height) - 0.0544 * log (age) + race_correction + m_spline)        
       
@@ -1876,9 +1846,6 @@ get_sigma_2012 <- function (age, height, sex, race, parameter) {
       
       if (is.na (race) == 0 && race == 1) race_correction <- 0
       if (is.na (race) == 0 && race == 2) race_correction <- 0.1096
-      #if (race == 3) race_correction <- -0.3973
-      #if (race == 4) race_correction <- 0.0327
-      #if (race == 3 | race == 4 | race == 5 | is.na (race)) race_correction <- 0.0114
 
       sigma <- exp (-2.326 + 0.0798 * log (age) + race_correction + s_spline)
       
@@ -1905,9 +1872,6 @@ get_sigma_2012 <- function (age, height, sex, race, parameter) {
       
       if (is.na (race) == 0 && race == 1) race_correction <- 0
       if (is.na (race) == 0 && race == 2) race_correction <- 0.1016
-      #if (race == 3) race_correction <- -0.0109
-      #if (race == 4) race_correction <- 0.0733
-      #if (race == 3 | race == 4 | race == 5 | is.na (race)) race_correction <- 0.0114
 
       sigma <- exp (-2.3765 + 0.0972 * log (age) + race_correction + s_spline)      
       
@@ -1939,9 +1903,6 @@ get_sigma_2012 <- function (age, height, sex, race, parameter) {
       
       if (is.na (race) == 0 && race == 1) race_correction <- 0
       if (is.na (race) == 0 && race == 2) race_correction <- 0.0794
-      #if (race == 3) race_correction <- -0.4600
-      #if (race == 4) race_correction <- 0.0325
-      #if (race == 3 | race == 4 | race == 5 | is.na (race)) race_correction <- -0.0503
 
       sigma <- exp (-2.2963 + 0.0718 * log (age) + race_correction + s_spline)
       
@@ -1967,9 +1928,6 @@ get_sigma_2012 <- function (age, height, sex, race, parameter) {
       
       if (is.na (race) == 0 && race == 1) race_correction <- 0
       if (is.na (race) == 0 && race == 2) race_correction <- 0.0810
-      #if (race == 3) race_correction <- -0.1809
-      #if (race == 4) race_correction <- 0.0459
-      #if (race == 3 | race == 4 | race == 5 | is.na (race)) race_correction <- -0.0503
 
       sigma <- exp (-2.3549 + 0.1017 * log (age) + race_correction + s_spline)      
       
@@ -2002,9 +1960,6 @@ get_sigma_2012 <- function (age, height, sex, race, parameter) {
       
       if (is.na (race) == 0 && race == 1) race_correction <- 0
       if (is.na (race) == 0 && race == 2) race_correction <- -0.0381
-      #if (race == 3) race_correction <- -0.2227
-      #if (race == 4) race_correction <- -0.1414
-      #if (race == 3 | race == 4 | race == 5 | is.na (race)) race_correction <- -0.0860
 
       sigma <- exp (-2.9595 + 0.1156 * log (age) + race_correction + s_spline)
       
@@ -2031,9 +1986,6 @@ get_sigma_2012 <- function (age, height, sex, race, parameter) {
       
       if (is.na (race) == 0 && race == 1) race_correction <- 0
       if (is.na (race) == 0 && race == 2) race_correction <- -0.0307
-      #if (race == 3) race_correction <- -0.1640
-      #if (race == 4) race_correction <- -0.1521
-      #if (race == 3 | race == 4 | race == 5 | is.na (race)) race_correction <- -0.0860
 
       sigma <- exp (-3.2395 + 0.1850 * log (age) + race_correction + s_spline)      
       
