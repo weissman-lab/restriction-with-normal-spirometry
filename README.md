@@ -1,5 +1,5 @@
-# Restriction with Normal Spirometry: A Retrospective Cohort Study
-Code used in "Restriction with Normal Spirometry: A Retrospective Cohort Study" by Alexander T. Moffett,  Aparna Balasubramanian, Meredith C. McCormack, and Gary E. Weissman.
+# Clinical Implications of Restriction with Normal Spirometry: A Retrospective Cohort Study
+Code used in "Clinical Implications of Restriction with Normal Spirometry: A Retrospective Cohort Study" by Alexander T. Moffett,  Aparna Balasubramanian, Benjamin E. Schmid, Meredith C. McCormack, and Gary E. Weissman.
 
 ## Manuscript
 
